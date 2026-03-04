@@ -29,13 +29,13 @@ export default function ChecklistItem({
 
   return (
     <div 
-      className={`bg-white rounded-lg p-4 border transition-all ${
+      className={`bg-white rounded-lg p-5 border transition-all ${
         completed 
           ? 'border-green-200 bg-green-50' 
-          : 'border-gray-200 hover:border-blue-300'
+          : 'border-gray-200 hover:border-blue-300 hover:shadow-sm'
       }`}
     >
-      <div className="flex items-start gap-3">
+      <div className="flex items-start gap-4">
         <button
           onClick={() => onToggle(id)}
           className="flex-shrink-0 mt-0.5"
@@ -48,13 +48,13 @@ export default function ChecklistItem({
         </button>
 
         <div className="flex-1 min-w-0">
-          <h3 className={`font-medium ${
+          <h3 className={`font-medium text-base ${
             completed ? 'text-gray-500 line-through' : 'text-gray-900'
           }`}>
             {title}
           </h3>
           
-          <div className="flex flex-wrap items-center gap-3 mt-2">
+          <div className="flex flex-wrap items-center gap-3 mt-3">
             <span className="inline-block px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded-full">
               {category}
             </span>

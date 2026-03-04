@@ -26,38 +26,38 @@ export default function CategoriaCard({
   }
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5 hover:shadow-md transition-shadow">
-      <div className="flex items-start justify-between mb-4">
-        <h3 className="text-lg font-semibold text-gray-900">{name}</h3>
+    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-all hover:scale-[1.02]">
+      <div className="flex items-start justify-between mb-5">
+        <h3 className="text-xl font-semibold text-gray-900">{name}</h3>
         {isOver && (
-          <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0" />
+          <AlertCircle className="w-6 h-6 text-red-500 flex-shrink-0" />
         )}
       </div>
 
-      <div className="space-y-3 mb-4">
+      <div className="space-y-4 mb-5">
         <div className="flex items-center justify-between">
-          <span className="text-sm text-gray-600">Orçamento</span>
-          <span className="text-sm font-medium text-gray-900">
+          <span className="text-base text-gray-600">Orçamento</span>
+          <span className="text-base font-medium text-gray-900">
             {formatCurrency(planned)}
           </span>
         </div>
 
         <div className="flex items-center justify-between">
-          <span className="text-sm text-gray-600">Gasto</span>
-          <span className="text-sm font-semibold text-gray-900">
+          <span className="text-base text-gray-600">Gasto</span>
+          <span className="text-base font-semibold text-gray-900">
             {formatCurrency(spent)}
           </span>
         </div>
 
         <div className="flex items-center justify-between">
-          <span className="text-sm text-gray-600">Diferença</span>
-          <span className={`text-sm font-semibold ${isOver ? 'text-red-600' : 'text-green-600'}`}>
+          <span className="text-base text-gray-600">Diferença</span>
+          <span className={`text-base font-semibold ${isOver ? 'text-red-600' : 'text-green-600'}`}>
             {formatCurrency(remaining)}
           </span>
         </div>
       </div>
 
-      <div className="mb-4">
+      <div className="mb-5">
         <ProgressBar 
           percentage={percentage} 
           showLabel={false}
@@ -78,7 +78,7 @@ export default function CategoriaCard({
 
       <button
         onClick={onViewDetails}
-        className="w-full bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 rounded-lg transition-colors text-sm"
+        className="w-full bg-blue-500 hover:bg-blue-600 text-white font-medium py-3 rounded-lg transition-colors text-base shadow-sm hover:shadow-md"
       >
         Ver detalhes
       </button>

@@ -8,8 +8,8 @@ interface NavbarProps {
 
 export default function Navbar({ onMenuClick }: NavbarProps) {
   return (
-    <nav className="bg-white border-b border-gray-200 px-4 py-3 md:px-6">
-      <div className="flex items-center justify-between">
+    <nav className="bg-white border-b border-gray-200 px-6 py-5">
+      <div className="flex items-center justify-between max-w-7xl mx-auto">
         <div className="flex items-center gap-3">
           <button
             onClick={onMenuClick}
@@ -17,8 +17,8 @@ export default function Navbar({ onMenuClick }: NavbarProps) {
           >
             <Menu className="w-5 h-5" />
           </button>
-          <h1 className="text-lg md:text-xl font-semibold text-gray-900">
-            Wedding Finance
+          <h1 className="text-xl md:text-2xl font-bold text-gray-900">
+            Organize seu Casamento
           </h1>
         </div>
       </div>

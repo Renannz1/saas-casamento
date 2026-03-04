@@ -4,6 +4,8 @@ import { useState } from 'react'
 import { mockData } from '@/data/mockData'
 import ChecklistItem from '@/components/ChecklistItem'
 import ProgressBar from '@/components/ProgressBar'
+import PageHeader from '@/components/PageHeader'
+import PageContainer from '@/components/PageContainer'
 
 export default function ChecklistPage() {
   const [checklist, setChecklist] = useState(mockData.checklist)
@@ -21,27 +23,30 @@ export default function ChecklistPage() {
   const percentage = (completedCount / totalCount) * 100
 
   return (
-    <div className="max-w-4xl mx-auto">
-      <h1 className="text-2xl font-bold text-gray-900 mb-6">Checklist do Casamento</h1>
+    <PageContainer maxWidth="lg">
+      <PageHeader 
+        title="Checklist do Casamento" 
+        subtitle="Acompanhe todas as tarefas para o grande dia"
+      />
 
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
-        <div className="flex items-center justify-between mb-3">
-          <h2 className="text-lg font-semibold text-gray-900">Progresso Geral</h2>
-          <span className="text-2xl font-bold text-gray-900">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-xl font-semibold text-gray-900">Progresso Geral</h2>
+          <span className="text-3xl font-bold text-gray-900">
             {completedCount}/{totalCount}
           </span>
         </div>
         
         <ProgressBar percentage={percentage} color="green" />
         
-        <p className="text-sm text-gray-600 mt-3">
+        <p className="text-base text-gray-600 mt-4">
           {completedCount === totalCount 
             ? '🎉 Parabéns! Todas as tarefas foram concluídas!' 
             : `Faltam ${totalCount - completedCount} tarefas para concluir`}
         </p>
       </div>
 
-      <div className="space-y-3">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {checklist
           .sort((a, b) => {
             if (a.completed !== b.completed) {
@@ -67,6 +72,6 @@ export default function ChecklistPage() {
           <p className="text-gray-500">Nenhuma tarefa no checklist</p>
         </div>
       )}
-    </div>
+    </PageContainer>
   )
 }

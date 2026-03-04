@@ -20,35 +20,35 @@ export default function CardResumo({ budgetTotal, totalSpent }: CardResumoProps)
 
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-      <h2 className="text-lg font-semibold text-gray-900 mb-4">Resumo Financeiro</h2>
+      <h2 className="text-xl font-semibold text-gray-900 mb-5">Resumo Financeiro</h2>
       
-      <div className="space-y-4">
+      <div className="space-y-4 md:space-y-5">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <DollarSign className="w-5 h-5 text-blue-500" />
-            <span className="text-sm text-gray-600">Orçamento Total</span>
+          <div className="flex items-center gap-3">
+            <DollarSign className="w-6 h-6 text-blue-500" />
+            <span className="text-base text-gray-600">Orçamento Total</span>
           </div>
-          <span className="text-lg font-semibold text-gray-900">
+          <span className="text-xl font-semibold text-gray-900">
             {formatCurrency(budgetTotal)}
           </span>
         </div>
 
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <TrendingDown className="w-5 h-5 text-orange-500" />
-            <span className="text-sm text-gray-600">Total Gasto</span>
+          <div className="flex items-center gap-3">
+            <TrendingDown className="w-6 h-6 text-orange-500" />
+            <span className="text-base text-gray-600">Total Gasto</span>
           </div>
-          <span className="text-lg font-semibold text-gray-900">
+          <span className="text-xl font-semibold text-gray-900">
             {formatCurrency(totalSpent)}
           </span>
         </div>
 
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <TrendingUp className={`w-5 h-5 ${isOverBudget ? 'text-red-500' : 'text-green-500'}`} />
-            <span className="text-sm text-gray-600">Restante</span>
+          <div className="flex items-center gap-3">
+            <TrendingUp className={`w-6 h-6 ${isOverBudget ? 'text-red-500' : 'text-green-500'}`} />
+            <span className="text-base text-gray-600">Restante</span>
           </div>
-          <span className={`text-lg font-semibold ${isOverBudget ? 'text-red-600' : 'text-green-600'}`}>
+          <span className={`text-xl font-semibold ${isOverBudget ? 'text-red-600' : 'text-green-600'}`}>
             {formatCurrency(remaining)}
           </span>
         </div>
