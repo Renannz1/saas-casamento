@@ -1,48 +1,98 @@
-# Wedding Finance - Sistema de Organização Financeira para Casamentos
+# Nuptial - Sistema de Organização Financeira para Casamentos
 
-Sistema web responsivo desenvolvido com Next.js (App Router), TypeScript e TailwindCSS para gerenciamento financeiro de casamentos.
+Sistema web responsivo desenvolvido com Next.js (App Router), TypeScript e TailwindCSS para gerenciamento financeiro de casamentos. Design elegante inspirado em paleta terrosa/rosé com tipografia premium.
 
 ## 🚀 Tecnologias
 
-- Next.js 15 (App Router)
-- TypeScript
-- TailwindCSS
-- Lucide React (ícones)
+- **Next.js 15** (App Router)
+- **TypeScript**
+- **TailwindCSS** com design system customizado
+- **Recharts** para visualização de dados
+- **Lucide React** para ícones
+- **Fontes**: Playfair Display (títulos) + Lato (corpo)
+
+## 🎨 Design System
+
+### Paleta de Cores
+- **Background**: Tons bege/creme claro (HSL 30, 33%, 97%)
+- **Primary**: Tons terrosos/rosé (HSL 24, 30%, 55%)
+- **Secondary**: Bege claro (HSL 30, 33%, 95%)
+- **Accent**: Marrom médio (HSL 24, 20%, 45%)
+- **Success**: Verde para valores positivos (HSL 142, 40%, 45%)
+- **Destructive**: Vermelho para alertas (HSL 0, 60%, 55%)
+
+### Tipografia
+- **Display**: Playfair Display (serif) - para títulos
+- **Body**: Lato (sans-serif) - para texto corrido
 
 ## 📋 Funcionalidades
 
-### Páginas Implementadas
+### 1. Login (`/login`)
+- Interface elegante com branding Nuptial
+- Autenticação fictícia (demonstração)
+- Redirecionamento automático para dashboard
 
-1. **Login** (`/login`)
-   - Interface de autenticação fictícia
-   - Redirecionamento para dashboard
+### 2. Dashboard (`/dashboard`)
+- **Resumo Financeiro Completo**
+  - Cards com orçamento total, gasto e restante
+  - Barra de progresso visual
+  - Alerta quando orçamento excedido
+  
+- **Gráfico de Pizza**
+  - Visualização de gastos por categoria
+  - Cores diferenciadas por categoria
+  - Tooltip com valores formatados
+  
+- **Próximos Pagamentos**
+  - Lista de pagamentos pendentes
+  - Status (pago/pendente)
+  - Datas de vencimento
+  
+- **Progresso do Checklist**
+  - Percentual de conclusão
+  - Próximas tarefas pendentes
 
-2. **Dashboard** (`/dashboard`)
-   - Resumo financeiro completo
-   - Gráfico de gastos por categoria
-   - Lista de próximos pagamentos
-   - Progresso do checklist
+### 3. Gastos (`/gastos`)
+- **Visualização por Categorias**
+  - Cards com previsto vs gasto vs diferença
+  - Indicador visual de categorias excedidas
+  - Barra de progresso por categoria
+  
+- **Detalhamento de Despesas**
+  - Lista completa de gastos por categoria
+  - Informações de parcelamento
+  - Status de pagamento
+  - Datas de vencimento
+  
+- **Modal de Adição** (demonstração)
+  - Interface para adicionar novos gastos
 
-3. **Gastos** (`/gastos`)
-   - Visualização em cards por categoria
-   - Detalhamento de despesas
-   - Indicadores visuais de orçamento
-   - Modal de adição (demonstração)
+### 4. Checklist (`/checklist`)
+- Lista completa de tarefas do casamento
+- Barra de progresso geral
+- Categorização de tarefas
+- Datas de vencimento
+- Toggle interativo para marcar conclusão
+- Feedback visual (riscado quando concluído)
 
-4. **Checklist** (`/checklist`)
-   - Lista de tarefas organizadas
-   - Barra de progresso geral
-   - Marcação interativa de conclusão
-   - Ordenação por status e data
+## 💾 Dados
 
-## 🎨 Design
+### Orçamento Total
+R$ 120.000,00
 
-- Mobile-first e totalmente responsivo
-- Interface minimalista e limpa
-- Sidebar no desktop
-- Bottom navigation no mobile
-- Cores: verde (positivo), vermelho (alerta)
-- Bordas arredondadas e sombras suaves
+### Categorias (6)
+1. **Buffet** - R$ 35.000 (planejado)
+2. **Decoração** - R$ 20.000 (planejado)
+3. **Fotografia** - R$ 15.000 (planejado)
+4. **Música** - R$ 10.000 (planejado)
+5. **Espaço** - R$ 25.000 (planejado)
+6. **Vestido** - R$ 15.000 (planejado)
+
+### Checklist
+10 tarefas organizadas por categoria e data
+
+### Próximos Pagamentos
+5 pagamentos pendentes com fornecedores
 
 ## 📦 Instalação
 
@@ -60,67 +110,97 @@ npm run build
 npm start
 ```
 
+O servidor estará disponível em `http://localhost:3000`
+
 ## 📁 Estrutura do Projeto
 
 ```
 wedding-finance/
 ├── app/
 │   ├── (dashboard)/
-│   │   ├── dashboard/
-│   │   ├── gastos/
-│   │   ├── checklist/
-│   │   └── layout.tsx
-│   ├── login/
-│   ├── globals.css
-│   ├── layout.tsx
-│   └── page.tsx
+│   │   ├── dashboard/page.tsx    # Dashboard principal
+│   │   ├── gastos/page.tsx       # Gestão de gastos
+│   │   ├── checklist/page.tsx    # Checklist de tarefas
+│   │   └── layout.tsx            # Layout do dashboard
+│   ├── login/page.tsx            # Página de login
+│   ├── globals.css               # Estilos globais + design system
+│   ├── layout.tsx                # Layout raiz
+│   └── page.tsx                  # Redirect para login
 ├── components/
-│   ├── BottomNav.tsx
-│   ├── CardResumo.tsx
-│   ├── CategoriaCard.tsx
-│   ├── ChecklistItem.tsx
-│   ├── ExpenseItem.tsx
-│   ├── Navbar.tsx
-│   ├── ProgressBar.tsx
-│   └── Sidebar.tsx
+│   ├── BottomNav.tsx             # Navegação mobile
+│   ├── Navbar.tsx                # Barra superior
+│   ├── ProgressBar.tsx           # Barra de progresso
+│   └── Sidebar.tsx               # Menu lateral desktop
 ├── data/
-│   └── mockData.ts
-└── ...
+│   └── mockData.ts               # Dados mockados
+├── tailwind.config.ts            # Configuração Tailwind
+└── package.json
 ```
-
-## 💾 Dados Mockados
-
-Todos os dados são mockados localmente em `data/mockData.ts`:
-- Orçamento total: R$ 80.000
-- 6 categorias de gastos
-- Múltiplas despesas por categoria
-- 8 itens no checklist
 
 ## 🎯 Características
 
-- ✅ Sem backend ou autenticação real
-- ✅ Dados completamente mockados
-- ✅ Componentização clara
-- ✅ Código limpo e organizado
+- ✅ Design elegante com paleta terrosa/rosé
+- ✅ Tipografia premium (Playfair Display + Lato)
+- ✅ Totalmente responsivo (mobile-first)
+- ✅ Gráficos interativos com Recharts
+- ✅ Animações suaves e transições
+- ✅ Componentização clara e reutilizável
 - ✅ TypeScript para type safety
-- ✅ Responsivo e mobile-first
-- ✅ Navegação funcional entre páginas
+- ✅ Dados completamente mockados
+- ✅ Sem backend ou autenticação real
 
 ## 📱 Responsividade
 
-- Mobile: Bottom navigation + menu lateral retrátil
-- Desktop: Sidebar fixa + navegação superior
+### Mobile
+- Bottom navigation fixa
+- Layout otimizado para telas pequenas
+- Cards empilhados verticalmente
+
+### Desktop
+- Sidebar expansível (hover para expandir)
+- Navegação superior
+- Grid de 2-3 colunas
 - Breakpoints otimizados com TailwindCSS
 
-## 🔄 Próximos Passos (Sugestões)
+## 🎨 Componentes Principais
 
-- Integração com backend real
-- Autenticação de usuários
-- Persistência de dados
-- Exportação de relatórios
-- Notificações de pagamentos
-- Compartilhamento entre noivos
+### ProgressBar
+Barra de progresso reutilizável com:
+- Suporte a valores excedidos
+- Variantes (default/danger)
+- Label opcional
+- Animações suaves
+
+### Sidebar
+Menu lateral com:
+- Expansão no hover
+- Indicador de página ativa
+- Ícones + texto
+- Transições suaves
+
+### BottomNav
+Navegação mobile com:
+- 3 itens principais
+- Indicador visual de página ativa
+- Ícones + labels
+
+## 🔄 Próximos Passos Sugeridos
+
+- [ ] Integração com backend real (Supabase/Firebase)
+- [ ] Autenticação de usuários
+- [ ] Persistência de dados
+- [ ] CRUD completo de gastos e tarefas
+- [ ] Exportação de relatórios (PDF/Excel)
+- [ ] Notificações de pagamentos próximos
+- [ ] Compartilhamento entre noivos
+- [ ] Upload de comprovantes
+- [ ] Histórico de alterações
+- [ ] Dark mode
 
 ## 📄 Licença
 
 Projeto de demonstração para fins educacionais.
+
+---
+
+**Desenvolvido com ❤️ para casais organizarem o dia mais especial de suas vidas**

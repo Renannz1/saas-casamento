@@ -1,35 +1,37 @@
 interface ProgressBarProps {
-  percentage: number;
+  value: number;
+  max: number;
   showLabel?: boolean;
-  color?: 'green' | 'red' | 'blue';
+  variant?: "default" | "danger";
+  className?: string;
 }
 
 export default function ProgressBar({ 
-  percentage, 
-  showLabel = true,
-  color = 'green' 
+  value, 
+  max, 
+  showLabel = false, 
+  variant, 
+  className = "" 
 }: ProgressBarProps) {
-  const clampedPercentage = Math.min(Math.max(percentage, 0), 100)
-  
-  const colorClasses = {
-    green: 'bg-green-500',
-    red: 'bg-red-500',
-    blue: 'bg-blue-500',
-  }
+  const pct = max > 0 ? Math.min((value / max) * 100, 100) : 0;
+  const isOver = value > max;
+  const barVariant = variant || (isOver ? "danger" : "default");
 
   return (
-    <div className="w-full">
-      <div className="w-full bg-gray-200 rounded-full h-2.5 overflow-hidden">
+    <div className={`w-full ${className}`}>
+      <div className="w-full h-2.5 bg-muted rounded-full overflow-hidden">
         <div
-          className={`h-2.5 rounded-full transition-all duration-300 ${colorClasses[color]}`}
-          style={{ width: `${clampedPercentage}%` }}
+          className={`h-full rounded-full transition-all duration-500 ${
+            barVariant === "danger" ? "bg-destructive" : "bg-primary"
+          }`}
+          style={{ width: `${isOver ? 100 : pct}%` }}
         />
       </div>
       {showLabel && (
-        <p className="text-sm text-gray-600 mt-1">
-          {clampedPercentage.toFixed(0)}%
+        <p className={`text-xs mt-1 font-medium ${isOver ? "text-destructive" : "text-muted-foreground"}`}>
+          {pct.toFixed(0)}%{isOver && " — Excedido!"}
         </p>
       )}
     </div>
-  )
+  );
 }

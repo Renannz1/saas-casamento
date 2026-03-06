@@ -1,144 +1,156 @@
+'use client'
+
 import { mockData } from '@/data/mockData'
-import CardResumo from '@/components/CardResumo'
-import PageHeader from '@/components/PageHeader'
-import PageContainer from '@/components/PageContainer'
-import { Calendar, CheckCircle2, Circle } from 'lucide-react'
+import ProgressBar from '@/components/ProgressBar'
+import { AlertTriangle, TrendingUp, TrendingDown, Wallet, Clock, Package, CreditCard, CalendarDays } from 'lucide-react'
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts'
+
+const COLORS = [
+  'hsl(24, 30%, 55%)',
+  'hsl(24, 20%, 45%)',
+  'hsl(30, 33%, 65%)',
+  'hsl(16, 38%, 34%)',
+  'hsl(30, 20%, 75%)',
+  'hsl(16, 20%, 56%)'
+]
 
 export default function DashboardPage() {
-  const totalSpent = mockData.categories.reduce((sum, cat) => sum + cat.spent, 0)
-  
-  const allExpenses = mockData.categories.flatMap(cat => 
-    cat.expenses.map(exp => ({ ...exp, category: cat.name }))
-  )
-  
-  const upcomingPayments = allExpenses
-    .filter(exp => !exp.paid)
-    .sort((a, b) => new Date(a.dueDate || '').getTime() - new Date(b.dueDate || '').getTime())
-    .slice(0, 5)
+  const totalSpent = mockData.categories.reduce((s, c) => s + c.spent, 0)
+  const remaining = mockData.budgetTotal - totalSpent
+  const isOver = totalSpent > mockData.budgetTotal
 
-  const completedTasks = mockData.checklist.filter(item => item.completed).length
-  const totalTasks = mockData.checklist.length
-  const checklistPercentage = (completedTasks / totalTasks) * 100
+  const chartData = mockData.categories.map((c) => ({ name: c.name, value: c.spent }))
 
-  const upcomingTasks = mockData.checklist
-    .filter(item => !item.completed)
-    .sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime())
-    .slice(0, 5)
+  const completedTasks = mockData.checklist.filter((t) => t.completed).length
+  const checklistPct = (completedTasks / mockData.checklist.length) * 100
+  const nextTasks = mockData.checklist.filter((t) => !t.completed).slice(0, 5)
 
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL',
-    }).format(value)
-  }
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('pt-BR', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric'
-    })
-  }
+  const fmt = (v: number) =>
+    v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
 
   return (
-    <PageContainer maxWidth="2xl">
-      <PageHeader 
-        title="Dashboard" 
-        subtitle="Visão geral das finanças do seu casamento"
-      />
+    <div className="space-y-6">
+      <h1 className="font-display text-2xl md:text-3xl font-bold">Dashboard</h1>
 
-      <div className="space-y-6">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <CardResumo budgetTotal={mockData.budgetTotal} totalSpent={totalSpent} />
+      {/* Financial Summary */}
+      <div className="bg-[hsl(var(--card))] rounded-2xl border border-[hsl(var(--border))] p-5 space-y-4">
+        <h2 className="font-display text-lg font-semibold">Resumo Financeiro</h2>
 
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <h2 className="text-xl font-semibold text-gray-900 mb-5">Gastos por Categoria</h2>
-            <div className="space-y-4">
-              {mockData.categories.map(category => {
-                const percentage = (category.spent / category.planned) * 100
-                const isOver = category.spent > category.planned
-                
-                return (
-                  <div key={category.id}>
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm font-medium text-gray-700">{category.name}</span>
-                      <span className={`text-sm font-semibold ${isOver ? 'text-red-600' : 'text-gray-900'}`}>
-                        {formatCurrency(category.spent)}
-                      </span>
-                    </div>
-                    <div className="w-full bg-gray-200 rounded-full h-2.5 overflow-hidden">
-                      <div
-                        className={`h-2.5 rounded-full transition-all ${isOver ? 'bg-red-500' : 'bg-blue-500'}`}
-                        style={{ width: `${Math.min(percentage, 100)}%` }}
-                      />
-                    </div>
-                  </div>
-                )
-              })}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="flex items-center gap-3 p-3 rounded-xl bg-secondary">
+            <Wallet className="h-8 w-8 text-primary" />
+            <div>
+              <p className="text-xs text-muted-foreground">Orçamento</p>
+              <p className="font-semibold text-[hsl(var(--foreground))]">{fmt(mockData.budgetTotal)}</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3 p-3 rounded-xl bg-secondary">
+            <TrendingUp className="h-8 w-8 text-primary" />
+            <div>
+              <p className="text-xs text-muted-foreground">Total Gasto</p>
+              <p className="font-semibold text-[hsl(var(--foreground))]">{fmt(totalSpent)}</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3 p-3 rounded-xl bg-secondary">
+            <TrendingDown className={`h-8 w-8 ${isOver ? 'text-destructive' : 'text-success'}`} />
+            <div>
+              <p className="text-xs text-muted-foreground">Restante</p>
+              <p className={`font-semibold ${isOver ? 'text-destructive' : 'text-success'}`}>
+                {fmt(remaining)}
+              </p>
             </div>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <h2 className="text-xl font-semibold text-gray-900 mb-5">Próximos Pagamentos</h2>
-            <div className="space-y-3">
-              {upcomingPayments.map(payment => (
-                <div key={payment.id} className="flex items-start justify-between p-3 bg-gray-50 rounded-lg">
-                  <div className="flex-1">
-                    <p className="font-medium text-gray-900">{payment.fornecedor}</p>
-                    <p className="text-sm text-gray-600">{payment.title}</p>
-                    <div className="flex items-center gap-2 mt-1">
-                      <Calendar className="w-4 h-4 text-gray-400" />
-                      <span className="text-xs text-gray-500">{formatDate(payment.dueDate || '')}</span>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <p className="font-semibold text-gray-900">{formatCurrency(payment.total)}</p>
-                    <span className="inline-block mt-1 px-2 py-1 bg-orange-100 text-orange-700 text-xs rounded-full">
-                      Pendente
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
+        <ProgressBar value={totalSpent} max={mockData.budgetTotal} showLabel />
+
+        {isOver && (
+          <div className="flex items-center gap-2 p-3 rounded-lg bg-destructive/10 text-destructive">
+            <AlertTriangle className="h-5 w-5 shrink-0" />
+            <span className="text-sm font-medium">Orçamento excedido!</span>
           </div>
+        )}
+      </div>
 
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <h2 className="text-xl font-semibold text-gray-900 mb-5">Progresso do Checklist</h2>
-            
-            <div className="mb-4">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-sm font-medium text-gray-700">
-                  {completedTasks} de {totalTasks} tarefas concluídas
-                </span>
-                <span className="text-sm font-semibold text-gray-900">
-                  {checklistPercentage.toFixed(0)}%
-                </span>
+      {/* Chart + Upcoming */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Pie Chart */}
+        <div className="bg-[hsl(var(--card))] rounded-2xl border border-[hsl(var(--border))] p-5">
+          <h2 className="font-display text-lg font-semibold mb-4">Gastos por Categoria</h2>
+          <div className="h-64">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie 
+                  data={chartData} 
+                  dataKey="value" 
+                  nameKey="name" 
+                  cx="50%" 
+                  cy="50%" 
+                  outerRadius={90} 
+                  innerRadius={50} 
+                  paddingAngle={3}
+                >
+                  {chartData.map((_, i) => (
+                    <Cell key={i} fill={COLORS[i % COLORS.length]} />
+                  ))}
+                </Pie>
+                <Tooltip formatter={(v: number) => fmt(v)} />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+          <div className="flex flex-wrap gap-3 mt-2">
+            {chartData.map((d, i) => (
+              <div key={d.name} className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: COLORS[i % COLORS.length] }} />
+                {d.name}
               </div>
-              <div className="w-full bg-gray-200 rounded-full h-2.5 overflow-hidden">
-                <div
-                  className="h-2.5 bg-green-500 rounded-full transition-all"
-                  style={{ width: `${checklistPercentage}%` }}
-                />
-              </div>
-            </div>
+            ))}
+          </div>
+        </div>
 
-            <div className="space-y-2">
-              <p className="text-sm font-medium text-gray-700 mb-2">Próximas tarefas:</p>
-              {upcomingTasks.map(task => (
-                <div key={task.id} className="flex items-start gap-3 p-2 hover:bg-gray-50 rounded-lg">
-                  <Circle className="w-5 h-5 text-gray-400 mt-0.5 flex-shrink-0" />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm text-gray-900">{task.title}</p>
-                    <p className="text-xs text-gray-500">{formatDate(task.dueDate)}</p>
-                  </div>
+        {/* Upcoming Payments */}
+        <div className="bg-[hsl(var(--card))] rounded-2xl border border-[hsl(var(--border))] p-5">
+          <h2 className="font-display text-lg font-semibold mb-4">Próximos Pagamentos</h2>
+          <div className="space-y-3">
+            {mockData.upcomingPayments.map((p, i) => (
+              <div key={i} className="flex items-center justify-between p-3 rounded-xl bg-secondary">
+                <div>
+                  <p className="text-sm font-medium text-[hsl(var(--foreground))]">{p.fornecedor}</p>
+                  <p className="text-xs text-muted-foreground">{new Date(p.date).toLocaleDateString('pt-BR')}</p>
                 </div>
-              ))}
-            </div>
+                <div className="text-right">
+                  <p className="text-sm font-semibold text-[hsl(var(--foreground))]">{fmt(p.valor)}</p>
+                  <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${
+                    p.paid ? 'bg-success/15 text-success' : 'bg-primary/15 text-primary'
+                  }`}>
+                    {p.paid ? 'Pago' : 'Pendente'}
+                  </span>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </div>
-    </PageContainer>
+
+      {/* Checklist Progress */}
+      <div className="bg-[hsl(var(--card))] rounded-2xl border border-[hsl(var(--border))] p-5">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="font-display text-lg font-semibold">Progresso do Checklist</h2>
+          <span className="text-sm text-muted-foreground">{checklistPct.toFixed(0)}% concluído</span>
+        </div>
+        <ProgressBar value={completedTasks} max={mockData.checklist.length} className="mb-4" />
+        <div className="space-y-2">
+          {nextTasks.map((t) => (
+            <div key={t.id} className="flex items-center gap-3 p-2.5 rounded-lg bg-secondary">
+              <Clock className="h-4 w-4 text-muted-foreground shrink-0" />
+              <div className="flex-1 min-w-0">
+                <p className="text-sm text-[hsl(var(--foreground))] truncate">{t.title}</p>
+                <p className="text-xs text-muted-foreground">{new Date(t.dueDate).toLocaleDateString('pt-BR')}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
   )
 }

@@ -1,27 +1,15 @@
-'use client'
+import { Heart } from 'lucide-react'
 
-import { Menu } from 'lucide-react'
-
-interface NavbarProps {
-  onMenuClick: () => void;
-}
-
-export default function Navbar({ onMenuClick }: NavbarProps) {
+export default function Navbar() {
   return (
-    <nav className="bg-white border-b border-gray-200 px-6 py-5">
-      <div className="flex items-center justify-between max-w-7xl mx-auto">
-        <div className="flex items-center gap-3">
-          <button
-            onClick={onMenuClick}
-            className="md:hidden p-2 hover:bg-gray-100 rounded-lg"
-          >
-            <Menu className="w-5 h-5" />
-          </button>
-          <h1 className="text-xl md:text-2xl font-bold text-gray-900">
-            Organize seu Casamento
-          </h1>
-        </div>
+    <header className="h-14 bg-[hsl(var(--card))] border-b border-[hsl(var(--border))] flex items-center px-4 md:px-6 sticky top-0 z-30">
+      <div className="flex items-center gap-2 md:hidden">
+        <Heart className="h-5 w-5 text-primary" />
+        <span className="font-display text-lg font-semibold text-[hsl(var(--foreground))]">Nuptial</span>
       </div>
-    </nav>
+      <div className="hidden md:block">
+        <h2 className="text-sm text-muted-foreground font-body">Organização financeira do seu casamento</h2>
+      </div>
+    </header>
   )
 }

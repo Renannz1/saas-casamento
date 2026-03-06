@@ -2,76 +2,65 @@
 
 import { useState } from 'react'
 import { mockData } from '@/data/mockData'
-import ChecklistItem from '@/components/ChecklistItem'
 import ProgressBar from '@/components/ProgressBar'
-import PageHeader from '@/components/PageHeader'
-import PageContainer from '@/components/PageContainer'
+import { CheckCircle2, Circle, CalendarDays } from 'lucide-react'
 
 export default function ChecklistPage() {
-  const [checklist, setChecklist] = useState(mockData.checklist)
+  const [items, setItems] = useState(mockData.checklist)
 
-  const handleToggle = (id: string) => {
-    setChecklist(prev =>
-      prev.map(item =>
-        item.id === id ? { ...item, completed: !item.completed } : item
-      )
+  const toggleItem = (id: string) => {
+    setItems((prev) =>
+      prev.map((item) => (item.id === id ? { ...item, completed: !item.completed } : item))
     )
   }
 
-  const completedCount = checklist.filter(item => item.completed).length
-  const totalCount = checklist.length
-  const percentage = (completedCount / totalCount) * 100
+  const completed = items.filter((i) => i.completed).length
 
   return (
-    <PageContainer maxWidth="lg">
-      <PageHeader 
-        title="Checklist do Casamento" 
-        subtitle="Acompanhe todas as tarefas para o grande dia"
-      />
+    <div className="space-y-6">
+      <h1 className="font-display text-2xl md:text-3xl font-bold">Checklist</h1>
 
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-semibold text-gray-900">Progresso Geral</h2>
-          <span className="text-3xl font-bold text-gray-900">
-            {completedCount}/{totalCount}
+      <div className="bg-[hsl(var(--card))] rounded-2xl border border-[hsl(var(--border))] p-5">
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="font-display text-lg font-semibold">Progresso Geral</h2>
+          <span className="text-sm text-muted-foreground">
+            {completed}/{items.length} concluídas
           </span>
         </div>
-        
-        <ProgressBar percentage={percentage} color="green" />
-        
-        <p className="text-base text-gray-600 mt-4">
-          {completedCount === totalCount 
-            ? '🎉 Parabéns! Todas as tarefas foram concluídas!' 
-            : `Faltam ${totalCount - completedCount} tarefas para concluir`}
-        </p>
+        <ProgressBar value={completed} max={items.length} showLabel />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        {checklist
-          .sort((a, b) => {
-            if (a.completed !== b.completed) {
-              return a.completed ? 1 : -1
-            }
-            return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime()
-          })
-          .map(item => (
-            <ChecklistItem
-              key={item.id}
-              id={item.id}
-              title={item.title}
-              category={item.category}
-              dueDate={item.dueDate}
-              completed={item.completed}
-              onToggle={handleToggle}
-            />
-          ))}
+      <div className="space-y-3">
+        {items.map((item) => (
+          <button
+            key={item.id}
+            onClick={() => toggleItem(item.id)}
+            className={`w-full text-left flex items-start gap-3 p-4 rounded-2xl border transition-all ${
+              item.completed
+                ? 'bg-[hsl(var(--card))] border-success/30'
+                : 'bg-[hsl(var(--card))] border-[hsl(var(--border))] hover:border-primary/30'
+            }`}
+          >
+            {item.completed ? (
+              <CheckCircle2 className="h-5 w-5 text-success shrink-0 mt-0.5" />
+            ) : (
+              <Circle className="h-5 w-5 text-muted-foreground shrink-0 mt-0.5" />
+            )}
+            <div className="flex-1 min-w-0">
+              <p className={`text-sm font-medium ${item.completed ? 'line-through text-muted-foreground' : 'text-[hsl(var(--foreground))]'}`}>
+                {item.title}
+              </p>
+              <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
+                <span className="px-1.5 py-0.5 rounded bg-secondary text-[10px]">{item.category}</span>
+                <span className="flex items-center gap-1">
+                  <CalendarDays className="h-3 w-3" />
+                  {new Date(item.dueDate).toLocaleDateString('pt-BR')}
+                </span>
+              </div>
+            </div>
+          </button>
+        ))}
       </div>
-
-      {checklist.length === 0 && (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-12 text-center">
-          <p className="text-gray-500">Nenhuma tarefa no checklist</p>
-        </div>
-      )}
-    </PageContainer>
+    </div>
   )
 }
