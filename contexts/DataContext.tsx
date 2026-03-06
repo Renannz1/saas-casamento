@@ -1,7 +1,7 @@
 'use client'
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react'
-import { mockData, ChecklistItem } from '@/data/mockData'
+import { mockData, ChecklistItem, Category } from '@/data/mockData'
 
 interface DataContextType {
   checklist: ChecklistItem[]
@@ -9,67 +9,111 @@ interface DataContextType {
   updateChecklistItem: (id: string, updates: Partial<ChecklistItem>) => void
   deleteChecklistItem: (id: string) => void
   toggleChecklistItem: (id: string) => void
+  categories: Category[]
+  addCategory: (category: Omit<Category, 'id' | 'spent' | 'expenses'>) => void
+  updateCategory: (id: string, updates: Partial<Category>) => void
+  deleteCategory: (id: string) => void
 }
 
 const DataContext = createContext<DataContextType | undefined>(undefined)
 
 export function DataProvider({ children }: { children: ReactNode }) {
   const [checklist, setChecklist] = useState<ChecklistItem[]>([])
+  const [categories, setCategories] = useState<Category[]>([])
   const [isLoaded, setIsLoaded] = useState(false)
 
   // Carrega dados do localStorage na inicialização
   useEffect(() => {
-    const saved = localStorage.getItem('weddingChecklist')
-    if (saved) {
+    const savedChecklist = localStorage.getItem('weddingChecklist')
+    const savedCategories = localStorage.getItem('weddingCategories')
+    
+    if (savedChecklist) {
       try {
-        const data = JSON.parse(saved)
-        setChecklist(data)
+        setChecklist(JSON.parse(savedChecklist))
       } catch (error) {
-        console.error('Erro ao carregar dados:', error)
+        console.error('Erro ao carregar checklist:', error)
         setChecklist(mockData.checklist)
       }
     } else {
-      // Primeira vez, usa mockData
       setChecklist(mockData.checklist)
     }
+
+    if (savedCategories) {
+      try {
+        setCategories(JSON.parse(savedCategories))
+      } catch (error) {
+        console.error('Erro ao carregar categorias:', error)
+        setCategories(mockData.categories)
+      }
+    } else {
+      setCategories(mockData.categories)
+    }
+
     setIsLoaded(true)
   }, [])
 
-  // Salva no localStorage sempre que checklist muda
+  // Salva checklist no localStorage
   useEffect(() => {
     if (isLoaded) {
       localStorage.setItem('weddingChecklist', JSON.stringify(checklist))
     }
   }, [checklist, isLoaded])
 
-  // CREATE - Adicionar nova tarefa
+  // Salva categorias no localStorage
+  useEffect(() => {
+    if (isLoaded) {
+      localStorage.setItem('weddingCategories', JSON.stringify(categories))
+    }
+  }, [categories, isLoaded])
+
+  // ========== CHECKLIST CRUD ==========
+
   const addChecklistItem = (item: Omit<ChecklistItem, 'id'>) => {
     const newItem: ChecklistItem = {
       ...item,
-      id: `c${Date.now()}`, // Gera ID único baseado no timestamp
+      id: `c${Date.now()}`,
     }
     setChecklist(prev => [...prev, newItem])
   }
 
-  // UPDATE - Atualizar tarefa existente
   const updateChecklistItem = (id: string, updates: Partial<ChecklistItem>) => {
     setChecklist(prev =>
       prev.map(item => (item.id === id ? { ...item, ...updates } : item))
     )
   }
 
-  // DELETE - Remover tarefa
   const deleteChecklistItem = (id: string) => {
     setChecklist(prev => prev.filter(item => item.id !== id))
   }
 
-  // TOGGLE - Marcar/desmarcar como concluída
   const toggleChecklistItem = (id: string) => {
     setChecklist(prev =>
       prev.map(item =>
         item.id === id ? { ...item, completed: !item.completed } : item
       )
     )
+  }
+
+  // ========== CATEGORIES CRUD ==========
+
+  const addCategory = (category: Omit<Category, 'id' | 'spent' | 'expenses'>) => {
+    const newCategory: Category = {
+      ...category,
+      id: `cat${Date.now()}`,
+      spent: 0,
+      expenses: [],
+    }
+    setCategories(prev => [...prev, newCategory])
+  }
+
+  const updateCategory = (id: string, updates: Partial<Category>) => {
+    setCategories(prev =>
+      prev.map(cat => (cat.id === id ? { ...cat, ...updates } : cat))
+    )
+  }
+
+  const deleteCategory = (id: string) => {
+    setCategories(prev => prev.filter(cat => cat.id !== id))
   }
 
   return (
@@ -80,6 +124,10 @@ export function DataProvider({ children }: { children: ReactNode }) {
         updateChecklistItem,
         deleteChecklistItem,
         toggleChecklistItem,
+        categories,
+        addCategory,
+        updateCategory,
+        deleteCategory,
       }}
     >
       {children}

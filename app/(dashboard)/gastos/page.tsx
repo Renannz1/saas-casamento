@@ -1,9 +1,11 @@
 'use client'
 
 import { useState } from 'react'
-import { mockData, Category, Expense } from '@/data/mockData'
+import { useData } from '@/contexts/DataContext'
+import { Category, Expense } from '@/data/mockData'
 import ProgressBar from '@/components/ProgressBar'
-import { ChevronLeft, Plus, Package, CreditCard, CalendarDays } from 'lucide-react'
+import ConfirmModal from '@/components/ConfirmModal'
+import { ChevronLeft, Plus, Package, CreditCard, CalendarDays, Pencil, Trash2, X } from 'lucide-react'
 
 const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
 
@@ -41,7 +43,12 @@ function ExpenseItem({ expense }: { expense: Expense }) {
   )
 }
 
-function CategoriaCard({ category, onSelect }: { category: Category; onSelect: () => void }) {
+function CategoriaCard({ category, onSelect, onEdit, onDelete }: { 
+  category: Category
+  onSelect: () => void
+  onEdit: () => void
+  onDelete: () => void
+}) {
   const diff = category.planned - category.spent
   const isOver = category.spent > category.planned
 
@@ -49,11 +56,33 @@ function CategoriaCard({ category, onSelect }: { category: Category; onSelect: (
     <div className="bg-[hsl(var(--card))] rounded-2xl border border-[hsl(var(--border))] p-5 space-y-3">
       <div className="flex items-center justify-between">
         <h3 className="font-display text-lg font-semibold text-[hsl(var(--foreground))]">{category.name}</h3>
-        {isOver && (
-          <span className="text-[10px] px-2 py-0.5 rounded-full bg-destructive/15 text-destructive font-medium">
-            Excedido
-          </span>
-        )}
+        <div className="flex items-center gap-1">
+          {isOver && (
+            <span className="text-[10px] px-2 py-0.5 rounded-full bg-destructive/15 text-destructive font-medium">
+              Excedido
+            </span>
+          )}
+          <button
+            onClick={(e) => {
+              e.stopPropagation()
+              onEdit()
+            }}
+            className="p-1.5 rounded-lg text-muted-foreground hover:text-primary hover:bg-secondary transition-colors"
+            title="Editar categoria"
+          >
+            <Pencil className="h-4 w-4" />
+          </button>
+          <button
+            onClick={(e) => {
+              e.stopPropagation()
+              onDelete()
+            }}
+            className="p-1.5 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
+            title="Excluir categoria"
+          >
+            <Trash2 className="h-4 w-4" />
+          </button>
+        </div>
       </div>
 
       <div className="grid grid-cols-3 gap-2 text-center">
@@ -86,8 +115,84 @@ function CategoriaCard({ category, onSelect }: { category: Category; onSelect: (
 }
 
 export default function GastosPage() {
+  const { categories, addCategory, updateCategory, deleteCategory } = useData()
   const [selected, setSelected] = useState<Category | null>(null)
   const [showModal, setShowModal] = useState(false)
+  const [showCategoryModal, setShowCategoryModal] = useState(false)
+  const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [categoryToDelete, setCategoryToDelete] = useState<string | null>(null)
+  const [editingCategory, setEditingCategory] = useState<Category | null>(null)
+  const [categoryFormData, setCategoryFormData] = useState({
+    name: '',
+    planned: '',
+  })
+
+  const handleOpenCategoryModal = (category?: Category) => {
+    if (category) {
+      setEditingCategory(category)
+      setCategoryFormData({
+        name: category.name,
+        planned: category.planned.toString(),
+      })
+    } else {
+      setEditingCategory(null)
+      setCategoryFormData({ name: '', planned: '' })
+    }
+    setShowCategoryModal(true)
+  }
+
+  const handleCloseCategoryModal = () => {
+    setShowCategoryModal(false)
+    setEditingCategory(null)
+    setCategoryFormData({ name: '', planned: '' })
+  }
+
+  const handleCategorySubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+
+    if (!categoryFormData.name || !categoryFormData.planned) {
+      alert('Preencha todos os campos')
+      return
+    }
+
+    const planned = parseFloat(categoryFormData.planned)
+    if (isNaN(planned) || planned <= 0) {
+      alert('Valor planejado deve ser um número positivo')
+      return
+    }
+
+    if (editingCategory) {
+      // UPDATE
+      updateCategory(editingCategory.id, {
+        name: categoryFormData.name,
+        planned: planned,
+      })
+    } else {
+      // CREATE
+      addCategory({
+        name: categoryFormData.name,
+        planned: planned,
+      })
+    }
+
+    handleCloseCategoryModal()
+  }
+
+  const handleDeleteCategory = (id: string) => {
+    setCategoryToDelete(id)
+    setShowDeleteModal(true)
+  }
+
+  const confirmDeleteCategory = () => {
+    if (categoryToDelete) {
+      deleteCategory(categoryToDelete)
+    }
+  }
+
+  const closeDeleteModal = () => {
+    setShowDeleteModal(false)
+    setCategoryToDelete(null)
+  }
 
   if (selected) {
     return (
@@ -143,12 +248,110 @@ export default function GastosPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="font-display text-2xl md:text-3xl font-bold">Gastos</h1>
+      <div className="flex items-center justify-between">
+        <h1 className="font-display text-2xl md:text-3xl font-bold">Gastos</h1>
+        <button
+          onClick={() => handleOpenCategoryModal()}
+          className="flex items-center gap-1.5 px-3 py-2 text-sm rounded-lg bg-primary text-primary-foreground hover:opacity-90 transition-opacity"
+        >
+          <Plus className="h-4 w-4" /> Nova Categoria
+        </button>
+      </div>
+
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {mockData.categories.map((cat) => (
-          <CategoriaCard key={cat.id} category={cat} onSelect={() => setSelected(cat)} />
+        {categories.map((cat) => (
+          <CategoriaCard 
+            key={cat.id} 
+            category={cat} 
+            onSelect={() => setSelected(cat)}
+            onEdit={() => handleOpenCategoryModal(cat)}
+            onDelete={() => handleDeleteCategory(cat.id)}
+          />
         ))}
       </div>
+
+      {/* Modal de Adicionar/Editar Categoria */}
+      {showCategoryModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-[hsl(var(--foreground))]/30 p-4"
+          onClick={handleCloseCategoryModal}
+        >
+          <div
+            className="bg-[hsl(var(--card))] rounded-2xl border border-[hsl(var(--border))] p-6 w-full max-w-md space-y-4"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between">
+              <h2 className="font-display text-lg font-semibold">
+                {editingCategory ? 'Editar Categoria' : 'Nova Categoria'}
+              </h2>
+              <button
+                onClick={handleCloseCategoryModal}
+                className="p-1 rounded-lg text-muted-foreground hover:text-[hsl(var(--foreground))] hover:bg-secondary transition-colors"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleCategorySubmit} className="space-y-3">
+              <div>
+                <label className="text-sm font-medium text-[hsl(var(--foreground))] mb-1.5 block">
+                  Nome da Categoria
+                </label>
+                <input
+                  type="text"
+                  value={categoryFormData.name}
+                  onChange={(e) => setCategoryFormData({ ...categoryFormData, name: e.target.value })}
+                  placeholder="Ex: Buffet, Decoração, etc"
+                  className="w-full px-3 py-2 rounded-lg border border-[hsl(var(--input))] bg-[hsl(var(--background))] text-sm text-[hsl(var(--foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--ring))]"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="text-sm font-medium text-[hsl(var(--foreground))] mb-1.5 block">
+                  Valor Planejado
+                </label>
+                <input
+                  type="number"
+                  step="0.01"
+                  value={categoryFormData.planned}
+                  onChange={(e) => setCategoryFormData({ ...categoryFormData, planned: e.target.value })}
+                  placeholder="Ex: 35000"
+                  className="w-full px-3 py-2 rounded-lg border border-[hsl(var(--input))] bg-[hsl(var(--background))] text-sm text-[hsl(var(--foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--ring))]"
+                  required
+                />
+              </div>
+
+              <div className="flex gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={handleCloseCategoryModal}
+                  className="flex-1 py-2 text-sm rounded-lg border border-[hsl(var(--border))] text-[hsl(var(--foreground))] hover:bg-secondary transition-colors"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 py-2 text-sm rounded-lg bg-primary text-primary-foreground hover:opacity-90 transition-opacity"
+                >
+                  {editingCategory ? 'Salvar' : 'Adicionar'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Confirmação de Exclusão */}
+      <ConfirmModal
+        isOpen={showDeleteModal}
+        onClose={closeDeleteModal}
+        onConfirm={confirmDeleteCategory}
+        title="Excluir Categoria"
+        message="Tem certeza que deseja excluir esta categoria? Todos os gastos associados também serão removidos. Esta ação não pode ser desfeita."
+        confirmText="Excluir"
+        variant="danger"
+      />
     </div>
   )
 }
