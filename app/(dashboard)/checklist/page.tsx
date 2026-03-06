@@ -4,7 +4,8 @@ import { useState } from 'react'
 import { useData } from '@/contexts/DataContext'
 import ProgressBar from '@/components/ProgressBar'
 import ConfirmModal from '@/components/ConfirmModal'
-import { CheckCircle2, Circle, CalendarDays, Plus, Pencil, Trash2, X } from 'lucide-react'
+import Modal from '@/components/Modal'
+import { CheckCircle2, Circle, CalendarDays, Plus, Pencil, Trash2 } from 'lucide-react'
 import { ChecklistItem } from '@/data/mockData'
 
 export default function ChecklistPage() {
@@ -157,88 +158,70 @@ export default function ChecklistPage() {
       </div>
 
       {/* Modal de Adicionar/Editar */}
-      {showModal && (
-        <div 
-          className="fixed inset-0 z-50 flex items-center justify-center bg-[hsl(var(--foreground))]/30 p-4"
-          onClick={handleCloseModal}
-        >
-          <div 
-            className="bg-[hsl(var(--card))] rounded-2xl border border-[hsl(var(--border))] p-6 w-full max-w-md space-y-4"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-center justify-between">
-              <h2 className="font-display text-lg font-semibold">
-                {editingItem ? 'Editar Tarefa' : 'Nova Tarefa'}
-              </h2>
-              <button
-                onClick={handleCloseModal}
-                className="p-1 rounded-lg text-muted-foreground hover:text-[hsl(var(--foreground))] hover:bg-secondary transition-colors"
-              >
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-
-            <form onSubmit={handleSubmit} className="space-y-3">
-              <div>
-                <label className="text-sm font-medium text-[hsl(var(--foreground))] mb-1.5 block">
-                  Título da Tarefa
-                </label>
-                <input
-                  type="text"
-                  value={formData.title}
-                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                  placeholder="Ex: Escolher convites"
-                  className="w-full px-3 py-2 rounded-lg border border-[hsl(var(--input))] bg-[hsl(var(--background))] text-sm text-[hsl(var(--foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--ring))]"
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="text-sm font-medium text-[hsl(var(--foreground))] mb-1.5 block">
-                  Categoria
-                </label>
-                <input
-                  type="text"
-                  value={formData.category}
-                  onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                  placeholder="Ex: Papelaria, Organização, etc"
-                  className="w-full px-3 py-2 rounded-lg border border-[hsl(var(--input))] bg-[hsl(var(--background))] text-sm text-[hsl(var(--foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--ring))]"
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="text-sm font-medium text-[hsl(var(--foreground))] mb-1.5 block">
-                  Data de Vencimento
-                </label>
-                <input
-                  type="date"
-                  value={formData.dueDate}
-                  onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })}
-                  className="w-full px-3 py-2 rounded-lg border border-[hsl(var(--input))] bg-[hsl(var(--background))] text-sm text-[hsl(var(--foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--ring))]"
-                  required
-                />
-              </div>
-
-              <div className="flex gap-2 pt-2">
-                <button
-                  type="button"
-                  onClick={handleCloseModal}
-                  className="flex-1 py-2 text-sm rounded-lg border border-[hsl(var(--border))] text-[hsl(var(--foreground))] hover:bg-secondary transition-colors"
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  className="flex-1 py-2 text-sm rounded-lg bg-primary text-primary-foreground hover:opacity-90 transition-opacity"
-                >
-                  {editingItem ? 'Salvar' : 'Adicionar'}
-                </button>
-              </div>
-            </form>
+      <Modal
+        isOpen={showModal}
+        onClose={handleCloseModal}
+        title={editingItem ? 'Editar Tarefa' : 'Nova Tarefa'}
+      >
+        <form onSubmit={handleSubmit} className="space-y-3">
+          <div>
+            <label className="text-sm font-medium text-[hsl(var(--foreground))] mb-1.5 block">
+              Título da Tarefa
+            </label>
+            <input
+              type="text"
+              value={formData.title}
+              onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+              placeholder="Ex: Escolher convites"
+              className="w-full px-3 py-2 rounded-lg border border-[hsl(var(--input))] bg-[hsl(var(--background))] text-sm text-[hsl(var(--foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--ring))]"
+              required
+            />
           </div>
-        </div>
-      )}
+
+          <div>
+            <label className="text-sm font-medium text-[hsl(var(--foreground))] mb-1.5 block">
+              Categoria
+            </label>
+            <input
+              type="text"
+              value={formData.category}
+              onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+              placeholder="Ex: Papelaria, Organização, etc"
+              className="w-full px-3 py-2 rounded-lg border border-[hsl(var(--input))] bg-[hsl(var(--background))] text-sm text-[hsl(var(--foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--ring))]"
+              required
+            />
+          </div>
+
+          <div>
+            <label className="text-sm font-medium text-[hsl(var(--foreground))] mb-1.5 block">
+              Data de Vencimento
+            </label>
+            <input
+              type="date"
+              value={formData.dueDate}
+              onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })}
+              className="w-full px-3 py-2 rounded-lg border border-[hsl(var(--input))] bg-[hsl(var(--background))] text-sm text-[hsl(var(--foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--ring))]"
+              required
+            />
+          </div>
+
+          <div className="flex gap-2 pt-2">
+            <button
+              type="button"
+              onClick={handleCloseModal}
+              className="flex-1 py-2 text-sm rounded-lg border border-[hsl(var(--border))] text-[hsl(var(--foreground))] hover:bg-secondary transition-colors"
+            >
+              Cancelar
+            </button>
+            <button
+              type="submit"
+              className="flex-1 py-2 text-sm rounded-lg bg-primary text-primary-foreground hover:opacity-90 transition-opacity"
+            >
+              {editingItem ? 'Salvar' : 'Adicionar'}
+            </button>
+          </div>
+        </form>
+      </Modal>
 
       {/* Modal de Confirmação de Exclusão */}
       <ConfirmModal
