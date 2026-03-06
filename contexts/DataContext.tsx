@@ -1,7 +1,7 @@
 'use client'
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react'
-import { mockData, ChecklistItem, Category } from '@/data/mockData'
+import { mockData, ChecklistItem, Category, Expense } from '@/data/mockData'
 
 interface DataContextType {
   checklist: ChecklistItem[]
@@ -13,6 +13,9 @@ interface DataContextType {
   addCategory: (category: Omit<Category, 'id' | 'spent' | 'expenses'>) => void
   updateCategory: (id: string, updates: Partial<Category>) => void
   deleteCategory: (id: string) => void
+  addExpense: (categoryId: string, expense: Omit<Expense, 'id'>) => void
+  updateExpense: (categoryId: string, expenseId: string, updates: Partial<Expense>) => void
+  deleteExpense: (categoryId: string, expenseId: string) => void
 }
 
 const DataContext = createContext<DataContextType | undefined>(undefined)
@@ -116,6 +119,66 @@ export function DataProvider({ children }: { children: ReactNode }) {
     setCategories(prev => prev.filter(cat => cat.id !== id))
   }
 
+  // ========== EXPENSES CRUD ==========
+
+  const addExpense = (categoryId: string, expense: Omit<Expense, 'id'>) => {
+    const newExpense: Expense = {
+      ...expense,
+      id: `exp${Date.now()}`,
+    }
+
+    setCategories(prev =>
+      prev.map(cat => {
+        if (cat.id === categoryId) {
+          const newExpenses = [...cat.expenses, newExpense]
+          const newSpent = newExpenses.reduce((sum, exp) => sum + exp.total, 0)
+          return {
+            ...cat,
+            expenses: newExpenses,
+            spent: newSpent,
+          }
+        }
+        return cat
+      })
+    )
+  }
+
+  const updateExpense = (categoryId: string, expenseId: string, updates: Partial<Expense>) => {
+    setCategories(prev =>
+      prev.map(cat => {
+        if (cat.id === categoryId) {
+          const newExpenses = cat.expenses.map(exp =>
+            exp.id === expenseId ? { ...exp, ...updates } : exp
+          )
+          const newSpent = newExpenses.reduce((sum, exp) => sum + exp.total, 0)
+          return {
+            ...cat,
+            expenses: newExpenses,
+            spent: newSpent,
+          }
+        }
+        return cat
+      })
+    )
+  }
+
+  const deleteExpense = (categoryId: string, expenseId: string) => {
+    setCategories(prev =>
+      prev.map(cat => {
+        if (cat.id === categoryId) {
+          const newExpenses = cat.expenses.filter(exp => exp.id !== expenseId)
+          const newSpent = newExpenses.reduce((sum, exp) => sum + exp.total, 0)
+          return {
+            ...cat,
+            expenses: newExpenses,
+            spent: newSpent,
+          }
+        }
+        return cat
+      })
+    )
+  }
+
   return (
     <DataContext.Provider
       value={{
@@ -128,6 +191,9 @@ export function DataProvider({ children }: { children: ReactNode }) {
         addCategory,
         updateCategory,
         deleteCategory,
+        addExpense,
+        updateExpense,
+        deleteExpense,
       }}
     >
       {children}

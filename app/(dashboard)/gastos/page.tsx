@@ -5,29 +5,52 @@ import { useData } from '@/contexts/DataContext'
 import { Category, Expense } from '@/data/mockData'
 import ProgressBar from '@/components/ProgressBar'
 import ConfirmModal from '@/components/ConfirmModal'
+import Modal from '@/components/Modal'
 import { ChevronLeft, Plus, Package, CreditCard, CalendarDays, Pencil, Trash2, X } from 'lucide-react'
 
 const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
 
-function ExpenseItem({ expense }: { expense: Expense }) {
+function ExpenseItem({ expense, onEdit, onDelete }: { 
+  expense: Expense
+  onEdit: () => void
+  onDelete: () => void
+}) {
   const installmentValue = expense.total / expense.installments
 
   return (
     <div className="p-4 rounded-xl bg-secondary space-y-2">
       <div className="flex items-start justify-between">
-        <div>
+        <div className="flex-1">
           <p className="text-sm font-medium text-[hsl(var(--foreground))]">{expense.title}</p>
           <p className="text-xs text-muted-foreground flex items-center gap-1">
             <Package className="h-3 w-3" /> {expense.fornecedor}
           </p>
         </div>
-        <div className="text-right">
-          <p className="text-sm font-semibold text-[hsl(var(--foreground))]">{fmt(expense.total)}</p>
-          <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${
-            expense.paid ? 'bg-success/15 text-success' : 'bg-primary/15 text-primary'
-          }`}>
-            {expense.paid ? 'Pago' : 'Pendente'}
-          </span>
+        <div className="flex items-start gap-2">
+          <div className="text-right">
+            <p className="text-sm font-semibold text-[hsl(var(--foreground))]">{fmt(expense.total)}</p>
+            <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${
+              expense.paid ? 'bg-success/15 text-success' : 'bg-primary/15 text-primary'
+            }`}>
+              {expense.paid ? 'Pago' : 'Pendente'}
+            </span>
+          </div>
+          <div className="flex flex-col gap-1">
+            <button
+              onClick={onEdit}
+              className="p-1 rounded-lg text-muted-foreground hover:text-primary hover:bg-muted transition-colors"
+              title="Editar gasto"
+            >
+              <Pencil className="h-3.5 w-3.5" />
+            </button>
+            <button
+              onClick={onDelete}
+              className="p-1 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
+              title="Excluir gasto"
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+            </button>
+          </div>
         </div>
       </div>
 
@@ -115,17 +138,32 @@ function CategoriaCard({ category, onSelect, onEdit, onDelete }: {
 }
 
 export default function GastosPage() {
-  const { categories, addCategory, updateCategory, deleteCategory } = useData()
-  const [selected, setSelected] = useState<Category | null>(null)
+  const { categories, addCategory, updateCategory, deleteCategory, addExpense, updateExpense, deleteExpense } = useData()
+  const [selectedId, setSelectedId] = useState<string | null>(null)
   const [showModal, setShowModal] = useState(false)
+  const [showExpenseModal, setShowExpenseModal] = useState(false)
   const [showCategoryModal, setShowCategoryModal] = useState(false)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [showDeleteExpenseModal, setShowDeleteExpenseModal] = useState(false)
   const [categoryToDelete, setCategoryToDelete] = useState<string | null>(null)
+  const [expenseToDelete, setExpenseToDelete] = useState<string | null>(null)
   const [editingCategory, setEditingCategory] = useState<Category | null>(null)
+  const [editingExpense, setEditingExpense] = useState<Expense | null>(null)
   const [categoryFormData, setCategoryFormData] = useState({
     name: '',
     planned: '',
   })
+  const [expenseFormData, setExpenseFormData] = useState({
+    title: '',
+    fornecedor: '',
+    total: '',
+    installments: '1',
+    paid: false,
+    dueDate: '',
+  })
+
+  // Busca a categoria selecionada sempre atualizada do Context
+  const selected = selectedId ? categories.find(cat => cat.id === selectedId) || null : null
 
   const handleOpenCategoryModal = (category?: Category) => {
     if (category) {
@@ -194,11 +232,115 @@ export default function GastosPage() {
     setCategoryToDelete(null)
   }
 
+  // ========== EXPENSE HANDLERS ==========
+
+  const handleOpenExpenseModal = (expense?: Expense) => {
+    if (expense) {
+      setEditingExpense(expense)
+      setExpenseFormData({
+        title: expense.title,
+        fornecedor: expense.fornecedor,
+        total: expense.total.toString(),
+        installments: expense.installments.toString(),
+        paid: expense.paid,
+        dueDate: expense.dueDate,
+      })
+    } else {
+      setEditingExpense(null)
+      setExpenseFormData({
+        title: '',
+        fornecedor: '',
+        total: '',
+        installments: '1',
+        paid: false,
+        dueDate: '',
+      })
+    }
+    setShowExpenseModal(true)
+  }
+
+  const handleCloseExpenseModal = () => {
+    setShowExpenseModal(false)
+    setEditingExpense(null)
+    setExpenseFormData({
+      title: '',
+      fornecedor: '',
+      total: '',
+      installments: '1',
+      paid: false,
+      dueDate: '',
+    })
+  }
+
+  const handleExpenseSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+
+    if (!selected) return
+
+    if (!expenseFormData.title || !expenseFormData.fornecedor || !expenseFormData.total || !expenseFormData.dueDate) {
+      alert('Preencha todos os campos obrigatórios')
+      return
+    }
+
+    const total = parseFloat(expenseFormData.total)
+    const installments = parseInt(expenseFormData.installments)
+
+    if (isNaN(total) || total <= 0) {
+      alert('Valor total deve ser um número positivo')
+      return
+    }
+
+    if (isNaN(installments) || installments < 1) {
+      alert('Número de parcelas deve ser pelo menos 1')
+      return
+    }
+
+    if (editingExpense) {
+      // UPDATE
+      updateExpense(selected.id, editingExpense.id, {
+        title: expenseFormData.title,
+        fornecedor: expenseFormData.fornecedor,
+        total: total,
+        installments: installments,
+        paid: expenseFormData.paid,
+        dueDate: expenseFormData.dueDate,
+      })
+    } else {
+      // CREATE
+      addExpense(selected.id, {
+        title: expenseFormData.title,
+        fornecedor: expenseFormData.fornecedor,
+        total: total,
+        installments: installments,
+        paid: expenseFormData.paid,
+        dueDate: expenseFormData.dueDate,
+      })
+    }
+
+    handleCloseExpenseModal()
+  }
+
+  const handleDeleteExpense = (expenseId: string) => {
+    setExpenseToDelete(expenseId)
+    setShowDeleteExpenseModal(true)
+  }
+
+  const confirmDeleteExpense = () => {
+    if (selected && expenseToDelete) {
+      deleteExpense(selected.id, expenseToDelete)
+    }
+  }
+
+  const closeDeleteExpenseModal = () => {
+    setShowDeleteExpenseModal(false)
+    setExpenseToDelete(null)
+  }
+
   if (selected) {
     return (
       <div className="space-y-4">
         <button
-          onClick={() => setSelected(null)}
+          onClick={() => setSelectedId(null)}
           className="flex items-center gap-1 text-sm text-muted-foreground hover:text-[hsl(var(--foreground))] transition-colors"
         >
           <ChevronLeft className="h-4 w-4" /> Voltar
@@ -207,41 +349,150 @@ export default function GastosPage() {
         <div className="flex items-center justify-between">
           <h1 className="font-display text-2xl font-bold">{selected.name}</h1>
           <button
-            onClick={() => setShowModal(true)}
+            onClick={() => handleOpenExpenseModal()}
             className="flex items-center gap-1.5 px-3 py-2 text-sm rounded-lg bg-primary text-primary-foreground hover:opacity-90 transition-opacity"
           >
-            <Plus className="h-4 w-4" /> Adicionar
+            <Plus className="h-4 w-4" /> Adicionar Gasto
           </button>
         </div>
 
         <div className="space-y-3">
-          {selected.expenses.map((exp) => (
-            <ExpenseItem key={exp.id} expense={exp} />
-          ))}
+          {selected.expenses.length === 0 ? (
+            <div className="text-center py-12 text-muted-foreground">
+              <Package className="h-12 w-12 mx-auto mb-3 opacity-50" />
+              <p className="text-sm">Nenhum gasto cadastrado nesta categoria</p>
+            </div>
+          ) : (
+            selected.expenses.map((exp) => (
+              <ExpenseItem 
+                key={exp.id} 
+                expense={exp}
+                onEdit={() => handleOpenExpenseModal(exp)}
+                onDelete={() => handleDeleteExpense(exp.id)}
+              />
+            ))
+          )}
         </div>
 
-        {/* Modal */}
-        {showModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-[hsl(var(--foreground))]/30 p-4" onClick={() => setShowModal(false)}>
-            <div className="bg-[hsl(var(--card))] rounded-2xl border border-[hsl(var(--border))] p-6 w-full max-w-md space-y-4" onClick={(e) => e.stopPropagation()}>
-              <h2 className="font-display text-lg font-semibold">Novo Gasto</h2>
-              <div className="space-y-3">
-                <input placeholder="Nome da despesa" className="w-full px-3 py-2 rounded-lg border border-[hsl(var(--input))] bg-[hsl(var(--background))] text-sm text-[hsl(var(--foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--ring))]" />
-                <input placeholder="Fornecedor" className="w-full px-3 py-2 rounded-lg border border-[hsl(var(--input))] bg-[hsl(var(--background))] text-sm text-[hsl(var(--foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--ring))]" />
-                <input placeholder="Valor total" type="number" className="w-full px-3 py-2 rounded-lg border border-[hsl(var(--input))] bg-[hsl(var(--background))] text-sm text-[hsl(var(--foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--ring))]" />
-                <input placeholder="Nº parcelas" type="number" className="w-full px-3 py-2 rounded-lg border border-[hsl(var(--input))] bg-[hsl(var(--background))] text-sm text-[hsl(var(--foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--ring))]" />
-              </div>
-              <div className="flex gap-2">
-                <button onClick={() => setShowModal(false)} className="flex-1 py-2 text-sm rounded-lg border border-[hsl(var(--border))] text-[hsl(var(--foreground))] hover:bg-secondary transition-colors">
-                  Cancelar
-                </button>
-                <button onClick={() => setShowModal(false)} className="flex-1 py-2 text-sm rounded-lg bg-primary text-primary-foreground hover:opacity-90 transition-opacity">
-                  Salvar
-                </button>
-              </div>
+        {/* Modal de Adicionar/Editar Gasto */}
+        <Modal
+          isOpen={showExpenseModal}
+          onClose={handleCloseExpenseModal}
+          title={editingExpense ? 'Editar Gasto' : 'Novo Gasto'}
+        >
+          <form onSubmit={handleExpenseSubmit} className="space-y-3">
+            <div>
+              <label className="text-sm font-medium text-[hsl(var(--foreground))] mb-1.5 block">
+                Nome da Despesa
+              </label>
+              <input
+                type="text"
+                value={expenseFormData.title}
+                onChange={(e) => setExpenseFormData({ ...expenseFormData, title: e.target.value })}
+                placeholder="Ex: Jantar completo"
+                className="w-full px-3 py-2 rounded-lg border border-[hsl(var(--input))] bg-[hsl(var(--background))] text-sm text-[hsl(var(--foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--ring))]"
+                required
+              />
             </div>
-          </div>
-        )}
+
+            <div>
+              <label className="text-sm font-medium text-[hsl(var(--foreground))] mb-1.5 block">
+                Fornecedor
+              </label>
+              <input
+                type="text"
+                value={expenseFormData.fornecedor}
+                onChange={(e) => setExpenseFormData({ ...expenseFormData, fornecedor: e.target.value })}
+                placeholder="Ex: Buffet Elegance"
+                className="w-full px-3 py-2 rounded-lg border border-[hsl(var(--input))] bg-[hsl(var(--background))] text-sm text-[hsl(var(--foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--ring))]"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="text-sm font-medium text-[hsl(var(--foreground))] mb-1.5 block">
+                Valor Total
+              </label>
+              <input
+                type="number"
+                step="0.01"
+                value={expenseFormData.total}
+                onChange={(e) => setExpenseFormData({ ...expenseFormData, total: e.target.value })}
+                placeholder="Ex: 25000"
+                className="w-full px-3 py-2 rounded-lg border border-[hsl(var(--input))] bg-[hsl(var(--background))] text-sm text-[hsl(var(--foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--ring))]"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="text-sm font-medium text-[hsl(var(--foreground))] mb-1.5 block">
+                Número de Parcelas
+              </label>
+              <input
+                type="number"
+                min="1"
+                value={expenseFormData.installments}
+                onChange={(e) => setExpenseFormData({ ...expenseFormData, installments: e.target.value })}
+                placeholder="Ex: 5"
+                className="w-full px-3 py-2 rounded-lg border border-[hsl(var(--input))] bg-[hsl(var(--background))] text-sm text-[hsl(var(--foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--ring))]"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="text-sm font-medium text-[hsl(var(--foreground))] mb-1.5 block">
+                Data de Vencimento
+              </label>
+              <input
+                type="date"
+                value={expenseFormData.dueDate}
+                onChange={(e) => setExpenseFormData({ ...expenseFormData, dueDate: e.target.value })}
+                className="w-full px-3 py-2 rounded-lg border border-[hsl(var(--input))] bg-[hsl(var(--background))] text-sm text-[hsl(var(--foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--ring))]"
+                required
+              />
+            </div>
+
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                id="paid"
+                checked={expenseFormData.paid}
+                onChange={(e) => setExpenseFormData({ ...expenseFormData, paid: e.target.checked })}
+                className="w-4 h-4 rounded border-[hsl(var(--input))] text-primary focus:ring-2 focus:ring-[hsl(var(--ring))]"
+              />
+              <label htmlFor="paid" className="text-sm text-[hsl(var(--foreground))] cursor-pointer">
+                Marcar como pago
+              </label>
+            </div>
+
+            <div className="flex gap-2 pt-2">
+              <button
+                type="button"
+                onClick={handleCloseExpenseModal}
+                className="flex-1 py-2 text-sm rounded-lg border border-[hsl(var(--border))] text-[hsl(var(--foreground))] hover:bg-secondary transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                type="submit"
+                className="flex-1 py-2 text-sm rounded-lg bg-primary text-primary-foreground hover:opacity-90 transition-opacity"
+              >
+                {editingExpense ? 'Salvar' : 'Adicionar'}
+              </button>
+            </div>
+          </form>
+        </Modal>
+
+        {/* Modal de Confirmação de Exclusão de Gasto */}
+        <ConfirmModal
+          isOpen={showDeleteExpenseModal}
+          onClose={closeDeleteExpenseModal}
+          onConfirm={confirmDeleteExpense}
+          title="Excluir Gasto"
+          message="Tem certeza que deseja excluir este gasto? Esta ação não pode ser desfeita."
+          confirmText="Excluir"
+          variant="danger"
+        />
       </div>
     )
   }
@@ -263,7 +514,7 @@ export default function GastosPage() {
           <CategoriaCard 
             key={cat.id} 
             category={cat} 
-            onSelect={() => setSelected(cat)}
+            onSelect={() => setSelectedId(cat.id)}
             onEdit={() => handleOpenCategoryModal(cat)}
             onDelete={() => handleDeleteCategory(cat.id)}
           />
@@ -271,28 +522,12 @@ export default function GastosPage() {
       </div>
 
       {/* Modal de Adicionar/Editar Categoria */}
-      {showCategoryModal && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-[hsl(var(--foreground))]/30 p-4"
-          onClick={handleCloseCategoryModal}
-        >
-          <div
-            className="bg-[hsl(var(--card))] rounded-2xl border border-[hsl(var(--border))] p-6 w-full max-w-md space-y-4"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-center justify-between">
-              <h2 className="font-display text-lg font-semibold">
-                {editingCategory ? 'Editar Categoria' : 'Nova Categoria'}
-              </h2>
-              <button
-                onClick={handleCloseCategoryModal}
-                className="p-1 rounded-lg text-muted-foreground hover:text-[hsl(var(--foreground))] hover:bg-secondary transition-colors"
-              >
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-
-            <form onSubmit={handleCategorySubmit} className="space-y-3">
+      <Modal
+        isOpen={showCategoryModal}
+        onClose={handleCloseCategoryModal}
+        title={editingCategory ? 'Editar Categoria' : 'Nova Categoria'}
+      >
+        <form onSubmit={handleCategorySubmit} className="space-y-3">
               <div>
                 <label className="text-sm font-medium text-[hsl(var(--foreground))] mb-1.5 block">
                   Nome da Categoria
@@ -338,9 +573,7 @@ export default function GastosPage() {
                 </button>
               </div>
             </form>
-          </div>
-        </div>
-      )}
+          </Modal>
 
       {/* Modal de Confirmação de Exclusão */}
       <ConfirmModal
