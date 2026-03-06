@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import './globals.css'
+import { DataProvider } from '@/contexts/DataContext'
 
 export const metadata: Metadata = {
   title: 'Wedding Finance - Organize seu Casamento',
@@ -13,7 +14,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="pt-BR">
-      <body>{children}</body>
+      <body>
+        <DataProvider>{children}</DataProvider>
+      </body>
     </html>
   )
 }
