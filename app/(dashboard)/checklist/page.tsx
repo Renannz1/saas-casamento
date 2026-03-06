@@ -3,12 +3,15 @@
 import { useState } from 'react'
 import { useData } from '@/contexts/DataContext'
 import ProgressBar from '@/components/ProgressBar'
+import ConfirmModal from '@/components/ConfirmModal'
 import { CheckCircle2, Circle, CalendarDays, Plus, Pencil, Trash2, X } from 'lucide-react'
 import { ChecklistItem } from '@/data/mockData'
 
 export default function ChecklistPage() {
   const { checklist, addChecklistItem, updateChecklistItem, deleteChecklistItem, toggleChecklistItem } = useData()
   const [showModal, setShowModal] = useState(false)
+  const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [itemToDelete, setItemToDelete] = useState<string | null>(null)
   const [editingItem, setEditingItem] = useState<ChecklistItem | null>(null)
   const [formData, setFormData] = useState({
     title: '',
@@ -62,9 +65,19 @@ export default function ChecklistPage() {
   }
 
   const handleDelete = (id: string) => {
-    if (confirm('Tem certeza que deseja excluir esta tarefa?')) {
-      deleteChecklistItem(id)
+    setItemToDelete(id)
+    setShowDeleteModal(true)
+  }
+
+  const confirmDelete = () => {
+    if (itemToDelete) {
+      deleteChecklistItem(itemToDelete)
     }
+  }
+
+  const closeDeleteModal = () => {
+    setShowDeleteModal(false)
+    setItemToDelete(null)
   }
 
   return (
@@ -226,6 +239,17 @@ export default function ChecklistPage() {
           </div>
         </div>
       )}
+
+      {/* Modal de Confirmação de Exclusão */}
+      <ConfirmModal
+        isOpen={showDeleteModal}
+        onClose={closeDeleteModal}
+        onConfirm={confirmDelete}
+        title="Excluir Tarefa"
+        message="Tem certeza que deseja excluir esta tarefa? Esta ação não pode ser desfeita."
+        confirmText="Excluir"
+        variant="danger"
+      />
     </div>
   )
 }
