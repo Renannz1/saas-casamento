@@ -2,7 +2,7 @@
 
 import { useData } from '@/contexts/DataContext'
 import ProgressBar from '@/components/ProgressBar'
-import { AlertTriangle, TrendingUp, TrendingDown, Wallet, Clock } from 'lucide-react'
+import { AlertTriangle, TrendingUp, TrendingDown, Wallet, Clock, Package, ClipboardList } from 'lucide-react'
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts'
 
 const COLORS = [
@@ -92,35 +92,50 @@ export default function DashboardPage() {
         {/* Pie Chart */}
         <div className="bg-[hsl(var(--card))] rounded-2xl border border-[hsl(var(--border))] p-5">
           <h2 className="font-display text-lg font-semibold mb-4">Gastos por Categoria</h2>
-          <div className="h-64">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie 
-                  data={chartData} 
-                  dataKey="value" 
-                  nameKey="name" 
-                  cx="50%" 
-                  cy="50%" 
-                  outerRadius={90} 
-                  innerRadius={50} 
-                  paddingAngle={3}
-                >
-                  {chartData.map((_, i) => (
-                    <Cell key={i} fill={COLORS[i % COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip formatter={(v: number) => fmt(v)} />
-              </PieChart>
-            </ResponsiveContainer>
-          </div>
-          <div className="flex flex-wrap gap-3 mt-2">
-            {chartData.map((d, i) => (
-              <div key={d.name} className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: COLORS[i % COLORS.length] }} />
-                {d.name}
+          {chartData.length === 0 ? (
+            <div className="h-64 flex items-center justify-center">
+              <div className="text-center">
+                <div className="w-16 h-16 mx-auto mb-3 rounded-full bg-muted flex items-center justify-center">
+                  <TrendingUp className="h-8 w-8 text-muted-foreground opacity-50" />
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  Nenhum gasto registrado ainda
+                </p>
               </div>
-            ))}
-          </div>
+            </div>
+          ) : (
+            <>
+              <div className="h-64">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie 
+                      data={chartData} 
+                      dataKey="value" 
+                      nameKey="name" 
+                      cx="50%" 
+                      cy="50%" 
+                      outerRadius={90} 
+                      innerRadius={50} 
+                      paddingAngle={3}
+                    >
+                      {chartData.map((_, i) => (
+                        <Cell key={i} fill={COLORS[i % COLORS.length]} />
+                      ))}
+                    </Pie>
+                    <Tooltip formatter={(v) => v ? fmt(v as number) : ''} />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+              <div className="flex flex-wrap gap-3 mt-2">
+                {chartData.map((d, i) => (
+                  <div key={d.name} className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                    <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: COLORS[i % COLORS.length] }} />
+                    {d.name}
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
         </div>
 
         {/* Upcoming Payments */}
@@ -128,9 +143,14 @@ export default function DashboardPage() {
           <h2 className="font-display text-lg font-semibold mb-4">Próximos Pagamentos</h2>
           <div className="space-y-3">
             {categories.length === 0 ? (
-              <p className="text-sm text-muted-foreground text-center py-8">
-                Nenhuma categoria cadastrada ainda
-              </p>
+              <div className="text-center py-8">
+                <div className="w-16 h-16 mx-auto mb-3 rounded-full bg-muted flex items-center justify-center">
+                  <Package className="h-8 w-8 text-muted-foreground opacity-50" />
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  Nenhuma categoria cadastrada ainda
+                </p>
+              </div>
             ) : (
               categories.slice(0, 5).map((cat) => (
                 <div key={cat.id} className="flex items-center justify-between p-3 rounded-xl bg-secondary">
@@ -175,9 +195,14 @@ export default function DashboardPage() {
             </div>
           </>
         ) : (
-          <p className="text-sm text-muted-foreground text-center py-8">
-            Nenhuma tarefa no checklist ainda
-          </p>
+          <div className="text-center py-8">
+            <div className="w-16 h-16 mx-auto mb-3 rounded-full bg-muted flex items-center justify-center">
+              <ClipboardList className="h-8 w-8 text-muted-foreground opacity-50" />
+            </div>
+            <p className="text-sm text-muted-foreground">
+              Nenhuma tarefa no checklist ainda
+            </p>
+          </div>
         )}
       </div>
     </div>
