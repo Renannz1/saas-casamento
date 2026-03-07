@@ -1,193 +1,143 @@
 'use client'
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react'
-import { mockData, ChecklistItem, Category, Expense } from '@/data/mockData'
+import { ChecklistItem, Category, Expense } from '@/data/mockData'
+import * as categoriasService from '@/lib/supabase/categorias'
+import * as gastosService from '@/lib/supabase/gastos'
+import * as tarefasService from '@/lib/supabase/tarefas'
 
 interface DataContextType {
   checklist: ChecklistItem[]
-  addChecklistItem: (item: Omit<ChecklistItem, 'id'>) => void
-  updateChecklistItem: (id: string, updates: Partial<ChecklistItem>) => void
-  deleteChecklistItem: (id: string) => void
-  toggleChecklistItem: (id: string) => void
+  checklistLoading: boolean
+  addChecklistItem: (item: Omit<ChecklistItem, 'id'>) => Promise<void>
+  updateChecklistItem: (id: string, updates: Partial<ChecklistItem>) => Promise<void>
+  deleteChecklistItem: (id: string) => Promise<void>
+  toggleChecklistItem: (id: string) => Promise<void>
   categories: Category[]
-  addCategory: (category: Omit<Category, 'id' | 'spent' | 'expenses'>) => void
-  updateCategory: (id: string, updates: Partial<Category>) => void
-  deleteCategory: (id: string) => void
-  addExpense: (categoryId: string, expense: Omit<Expense, 'id'>) => void
-  updateExpense: (categoryId: string, expenseId: string, updates: Partial<Expense>) => void
-  deleteExpense: (categoryId: string, expenseId: string) => void
+  categoriesLoading: boolean
+  addCategory: (category: Omit<Category, 'id' | 'spent' | 'expenses'>) => Promise<void>
+  updateCategory: (id: string, updates: Partial<Category>) => Promise<void>
+  deleteCategory: (id: string) => Promise<void>
+  addExpense: (categoryId: string, expense: Omit<Expense, 'id'>) => Promise<void>
+  updateExpense: (categoryId: string, expenseId: string, updates: Partial<Expense>) => Promise<void>
+  deleteExpense: (categoryId: string, expenseId: string) => Promise<void>
 }
 
 const DataContext = createContext<DataContextType | undefined>(undefined)
 
 export function DataProvider({ children }: { children: ReactNode }) {
   const [checklist, setChecklist] = useState<ChecklistItem[]>([])
+  const [checklistLoading, setChecklistLoading] = useState(true)
   const [categories, setCategories] = useState<Category[]>([])
-  const [isLoaded, setIsLoaded] = useState(false)
+  const [categoriesLoading, setCategoriesLoading] = useState(true)
 
-  // Carrega dados do localStorage na inicialização
+  // Carrega checklist do Supabase na inicialização
   useEffect(() => {
-    const savedChecklist = localStorage.getItem('weddingChecklist')
-    const savedCategories = localStorage.getItem('weddingCategories')
-    
-    if (savedChecklist) {
-      try {
-        setChecklist(JSON.parse(savedChecklist))
-      } catch (error) {
-        console.error('Erro ao carregar checklist:', error)
-        setChecklist(mockData.checklist)
-      }
-    } else {
-      setChecklist(mockData.checklist)
-    }
-
-    if (savedCategories) {
-      try {
-        setCategories(JSON.parse(savedCategories))
-      } catch (error) {
-        console.error('Erro ao carregar categorias:', error)
-        setCategories(mockData.categories)
-      }
-    } else {
-      setCategories(mockData.categories)
-    }
-
-    setIsLoaded(true)
+    carregarChecklist()
   }, [])
 
-  // Salva checklist no localStorage
+  // Carrega categorias do Supabase na inicialização
   useEffect(() => {
-    if (isLoaded) {
-      localStorage.setItem('weddingChecklist', JSON.stringify(checklist))
-    }
-  }, [checklist, isLoaded])
+    carregarCategorias()
+  }, [])
 
-  // Salva categorias no localStorage
-  useEffect(() => {
-    if (isLoaded) {
-      localStorage.setItem('weddingCategories', JSON.stringify(categories))
+  async function carregarChecklist() {
+    try {
+      setChecklistLoading(true)
+      const tarefas = await tarefasService.buscarTarefas()
+      setChecklist(tarefas)
+    } catch (error) {
+      setChecklist([])
+    } finally {
+      setChecklistLoading(false)
     }
-  }, [categories, isLoaded])
+  }
 
-  // ========== CHECKLIST CRUD ==========
-
-  const addChecklistItem = (item: Omit<ChecklistItem, 'id'>) => {
-    const newItem: ChecklistItem = {
-      ...item,
-      id: `c${Date.now()}`,
+  async function carregarCategorias() {
+    try {
+      setCategoriesLoading(true)
+      const cats = await categoriasService.buscarCategorias()
+      setCategories(cats)
+    } catch (error) {
+      setCategories([])
+    } finally {
+      setCategoriesLoading(false)
     }
+  }
+
+  // ========== CHECKLIST CRUD (Supabase) ==========
+
+  const addChecklistItem = async (item: Omit<ChecklistItem, 'id'>) => {
+    const newItem = await tarefasService.adicionarTarefa(item)
     setChecklist(prev => [...prev, newItem])
   }
 
-  const updateChecklistItem = (id: string, updates: Partial<ChecklistItem>) => {
+  const updateChecklistItem = async (id: string, updates: Partial<ChecklistItem>) => {
+    const updatedItem = await tarefasService.atualizarTarefa(id, updates)
     setChecklist(prev =>
-      prev.map(item => (item.id === id ? { ...item, ...updates } : item))
+      prev.map(item => (item.id === id ? updatedItem : item))
     )
   }
 
-  const deleteChecklistItem = (id: string) => {
+  const deleteChecklistItem = async (id: string) => {
+    await tarefasService.deletarTarefa(id)
     setChecklist(prev => prev.filter(item => item.id !== id))
   }
 
-  const toggleChecklistItem = (id: string) => {
+  const toggleChecklistItem = async (id: string) => {
+    const updatedItem = await tarefasService.alternarTarefa(id)
     setChecklist(prev =>
-      prev.map(item =>
-        item.id === id ? { ...item, completed: !item.completed } : item
-      )
+      prev.map(item => (item.id === id ? updatedItem : item))
     )
   }
 
-  // ========== CATEGORIES CRUD ==========
+  // ========== CATEGORIES CRUD (Supabase) ==========
 
-  const addCategory = (category: Omit<Category, 'id' | 'spent' | 'expenses'>) => {
-    const newCategory: Category = {
-      ...category,
-      id: `cat${Date.now()}`,
-      spent: 0,
-      expenses: [],
-    }
+  const addCategory = async (category: Omit<Category, 'id' | 'spent' | 'expenses'>) => {
+    const newCategory = await categoriasService.adicionarCategoria(category)
     setCategories(prev => [...prev, newCategory])
   }
 
-  const updateCategory = (id: string, updates: Partial<Category>) => {
+  const updateCategory = async (id: string, updates: Partial<Category>) => {
+    const updatedCategory = await categoriasService.atualizarCategoria(id, updates)
     setCategories(prev =>
-      prev.map(cat => (cat.id === id ? { ...cat, ...updates } : cat))
+      prev.map(cat => (cat.id === id ? updatedCategory : cat))
     )
   }
 
-  const deleteCategory = (id: string) => {
+  const deleteCategory = async (id: string) => {
+    await categoriasService.deletarCategoria(id)
     setCategories(prev => prev.filter(cat => cat.id !== id))
   }
 
-  // ========== EXPENSES CRUD ==========
+  // ========== EXPENSES CRUD (Supabase) ==========
 
-  const addExpense = (categoryId: string, expense: Omit<Expense, 'id'>) => {
-    const newExpense: Expense = {
-      ...expense,
-      id: `exp${Date.now()}`,
-    }
-
-    setCategories(prev =>
-      prev.map(cat => {
-        if (cat.id === categoryId) {
-          const newExpenses = [...cat.expenses, newExpense]
-          const newSpent = newExpenses.reduce((sum, exp) => sum + exp.total, 0)
-          return {
-            ...cat,
-            expenses: newExpenses,
-            spent: newSpent,
-          }
-        }
-        return cat
-      })
-    )
+  const addExpense = async (categoryId: string, expense: Omit<Expense, 'id'>) => {
+    await gastosService.adicionarGasto(categoryId, expense)
+    await carregarCategorias()
   }
 
-  const updateExpense = (categoryId: string, expenseId: string, updates: Partial<Expense>) => {
-    setCategories(prev =>
-      prev.map(cat => {
-        if (cat.id === categoryId) {
-          const newExpenses = cat.expenses.map(exp =>
-            exp.id === expenseId ? { ...exp, ...updates } : exp
-          )
-          const newSpent = newExpenses.reduce((sum, exp) => sum + exp.total, 0)
-          return {
-            ...cat,
-            expenses: newExpenses,
-            spent: newSpent,
-          }
-        }
-        return cat
-      })
-    )
+  const updateExpense = async (categoryId: string, expenseId: string, updates: Partial<Expense>) => {
+    await gastosService.atualizarGasto(categoryId, expenseId, updates)
+    await carregarCategorias()
   }
 
-  const deleteExpense = (categoryId: string, expenseId: string) => {
-    setCategories(prev =>
-      prev.map(cat => {
-        if (cat.id === categoryId) {
-          const newExpenses = cat.expenses.filter(exp => exp.id !== expenseId)
-          const newSpent = newExpenses.reduce((sum, exp) => sum + exp.total, 0)
-          return {
-            ...cat,
-            expenses: newExpenses,
-            spent: newSpent,
-          }
-        }
-        return cat
-      })
-    )
+  const deleteExpense = async (categoryId: string, expenseId: string) => {
+    await gastosService.deletarGasto(categoryId, expenseId)
+    await carregarCategorias()
   }
 
   return (
     <DataContext.Provider
       value={{
         checklist,
+        checklistLoading,
         addChecklistItem,
         updateChecklistItem,
         deleteChecklistItem,
         toggleChecklistItem,
         categories,
+        categoriesLoading,
         addCategory,
         updateCategory,
         deleteCategory,

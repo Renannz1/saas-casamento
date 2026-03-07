@@ -6,6 +6,7 @@ import { Category, Expense } from '@/data/mockData'
 import ProgressBar from '@/components/ProgressBar'
 import ConfirmModal from '@/components/ConfirmModal'
 import Modal from '@/components/Modal'
+import EmptyState from '@/components/EmptyState'
 import { ChevronLeft, Plus, Package, CreditCard, CalendarDays, Pencil, Trash2, X } from 'lucide-react'
 
 const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
@@ -138,7 +139,7 @@ function CategoriaCard({ category, onSelect, onEdit, onDelete }: {
 }
 
 export default function GastosPage() {
-  const { categories, addCategory, updateCategory, deleteCategory, addExpense, updateExpense, deleteExpense } = useData()
+  const { categories, categoriesLoading, addCategory, updateCategory, deleteCategory, addExpense, updateExpense, deleteExpense } = useData()
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [showModal, setShowModal] = useState(false)
   const [showExpenseModal, setShowExpenseModal] = useState(false)
@@ -165,6 +166,17 @@ export default function GastosPage() {
   // Busca a categoria selecionada sempre atualizada do Context
   const selected = selectedId ? categories.find(cat => cat.id === selectedId) || null : null
 
+  if (categoriesLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Carregando categorias...</p>
+        </div>
+      </div>
+    )
+  }
+
   const handleOpenCategoryModal = (category?: Category) => {
     if (category) {
       setEditingCategory(category)
@@ -185,7 +197,7 @@ export default function GastosPage() {
     setCategoryFormData({ name: '', planned: '' })
   }
 
-  const handleCategorySubmit = (e: React.FormEvent) => {
+  const handleCategorySubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
     if (!categoryFormData.name || !categoryFormData.planned) {
@@ -199,21 +211,24 @@ export default function GastosPage() {
       return
     }
 
-    if (editingCategory) {
-      // UPDATE
-      updateCategory(editingCategory.id, {
-        name: categoryFormData.name,
-        planned: planned,
-      })
-    } else {
-      // CREATE
-      addCategory({
-        name: categoryFormData.name,
-        planned: planned,
-      })
+    try {
+      if (editingCategory) {
+        // UPDATE
+        await updateCategory(editingCategory.id, {
+          name: categoryFormData.name,
+          planned: planned,
+        })
+      } else {
+        // CREATE
+        await addCategory({
+          name: categoryFormData.name,
+          planned: planned,
+        })
+      }
+      handleCloseCategoryModal()
+    } catch (error) {
+      alert('Erro ao salvar categoria. Tente novamente.')
     }
-
-    handleCloseCategoryModal()
   }
 
   const handleDeleteCategory = (id: string) => {
@@ -221,9 +236,13 @@ export default function GastosPage() {
     setShowDeleteModal(true)
   }
 
-  const confirmDeleteCategory = () => {
+  const confirmDeleteCategory = async () => {
     if (categoryToDelete) {
-      deleteCategory(categoryToDelete)
+      try {
+        await deleteCategory(categoryToDelete)
+      } catch (error) {
+        alert('Erro ao excluir categoria. Tente novamente.')
+      }
     }
   }
 
@@ -272,7 +291,7 @@ export default function GastosPage() {
     })
   }
 
-  const handleExpenseSubmit = (e: React.FormEvent) => {
+  const handleExpenseSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
     if (!selected) return
@@ -295,29 +314,32 @@ export default function GastosPage() {
       return
     }
 
-    if (editingExpense) {
-      // UPDATE
-      updateExpense(selected.id, editingExpense.id, {
-        title: expenseFormData.title,
-        fornecedor: expenseFormData.fornecedor,
-        total: total,
-        installments: installments,
-        paid: expenseFormData.paid,
-        dueDate: expenseFormData.dueDate,
-      })
-    } else {
-      // CREATE
-      addExpense(selected.id, {
-        title: expenseFormData.title,
-        fornecedor: expenseFormData.fornecedor,
-        total: total,
-        installments: installments,
-        paid: expenseFormData.paid,
-        dueDate: expenseFormData.dueDate,
-      })
+    try {
+      if (editingExpense) {
+        // UPDATE
+        await updateExpense(selected.id, editingExpense.id, {
+          title: expenseFormData.title,
+          fornecedor: expenseFormData.fornecedor,
+          total: total,
+          installments: installments,
+          paid: expenseFormData.paid,
+          dueDate: expenseFormData.dueDate,
+        })
+      } else {
+        // CREATE
+        await addExpense(selected.id, {
+          title: expenseFormData.title,
+          fornecedor: expenseFormData.fornecedor,
+          total: total,
+          installments: installments,
+          paid: expenseFormData.paid,
+          dueDate: expenseFormData.dueDate,
+        })
+      }
+      handleCloseExpenseModal()
+    } catch (error) {
+      alert('Erro ao salvar gasto. Tente novamente.')
     }
-
-    handleCloseExpenseModal()
   }
 
   const handleDeleteExpense = (expenseId: string) => {
@@ -325,9 +347,13 @@ export default function GastosPage() {
     setShowDeleteExpenseModal(true)
   }
 
-  const confirmDeleteExpense = () => {
+  const confirmDeleteExpense = async () => {
     if (selected && expenseToDelete) {
-      deleteExpense(selected.id, expenseToDelete)
+      try {
+        await deleteExpense(selected.id, expenseToDelete)
+      } catch (error) {
+        alert('Erro ao excluir gasto. Tente novamente.')
+      }
     }
   }
 
@@ -358,10 +384,13 @@ export default function GastosPage() {
 
         <div className="space-y-3">
           {selected.expenses.length === 0 ? (
-            <div className="text-center py-12 text-muted-foreground">
-              <Package className="h-12 w-12 mx-auto mb-3 opacity-50" />
-              <p className="text-sm">Nenhum gasto cadastrado nesta categoria</p>
-            </div>
+            <EmptyState
+              icon={Package}
+              title="Nenhum gasto cadastrado"
+              description="Adicione gastos nesta categoria para controlar seus custos"
+              actionLabel="Adicionar Primeiro Gasto"
+              onAction={() => handleOpenExpenseModal()}
+            />
           ) : (
             selected.expenses.map((exp) => (
               <ExpenseItem 
@@ -509,17 +538,27 @@ export default function GastosPage() {
         </button>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {categories.map((cat) => (
-          <CategoriaCard 
-            key={cat.id} 
-            category={cat} 
-            onSelect={() => setSelectedId(cat.id)}
-            onEdit={() => handleOpenCategoryModal(cat)}
-            onDelete={() => handleDeleteCategory(cat.id)}
-          />
-        ))}
-      </div>
+      {categories.length === 0 ? (
+        <EmptyState
+          icon={Package}
+          title="Nenhuma categoria cadastrada"
+          description="Comece criando sua primeira categoria de gastos para organizar o orçamento do seu casamento"
+          actionLabel="Criar Primeira Categoria"
+          onAction={() => handleOpenCategoryModal()}
+        />
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {categories.map((cat) => (
+            <CategoriaCard 
+              key={cat.id} 
+              category={cat} 
+              onSelect={() => setSelectedId(cat.id)}
+              onEdit={() => handleOpenCategoryModal(cat)}
+              onDelete={() => handleDeleteCategory(cat.id)}
+            />
+          ))}
+        </div>
+      )}
 
       {/* Modal de Adicionar/Editar Categoria */}
       <Modal

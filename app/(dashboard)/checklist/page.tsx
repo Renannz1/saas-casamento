@@ -5,11 +5,12 @@ import { useData } from '@/contexts/DataContext'
 import ProgressBar from '@/components/ProgressBar'
 import ConfirmModal from '@/components/ConfirmModal'
 import Modal from '@/components/Modal'
-import { CheckCircle2, Circle, CalendarDays, Plus, Pencil, Trash2 } from 'lucide-react'
+import EmptyState from '@/components/EmptyState'
+import { CheckCircle2, Circle, CalendarDays, Plus, Pencil, Trash2, ClipboardList } from 'lucide-react'
 import { ChecklistItem } from '@/data/mockData'
 
 export default function ChecklistPage() {
-  const { checklist, addChecklistItem, updateChecklistItem, deleteChecklistItem, toggleChecklistItem } = useData()
+  const { checklist, checklistLoading, addChecklistItem, updateChecklistItem, deleteChecklistItem, toggleChecklistItem } = useData()
   const [showModal, setShowModal] = useState(false)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [itemToDelete, setItemToDelete] = useState<string | null>(null)
@@ -21,6 +22,17 @@ export default function ChecklistPage() {
   })
 
   const completed = checklist.filter((i) => i.completed).length
+
+  if (checklistLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Carregando tarefas...</p>
+        </div>
+      </div>
+    )
+  }
 
   const handleOpenModal = (item?: ChecklistItem) => {
     if (item) {
@@ -43,7 +55,7 @@ export default function ChecklistPage() {
     setFormData({ title: '', category: '', dueDate: '' })
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
     if (!formData.title || !formData.category || !formData.dueDate) {
@@ -51,18 +63,21 @@ export default function ChecklistPage() {
       return
     }
 
-    if (editingItem) {
-      // UPDATE
-      updateChecklistItem(editingItem.id, formData)
-    } else {
-      // CREATE
-      addChecklistItem({
-        ...formData,
-        completed: false,
-      })
+    try {
+      if (editingItem) {
+        // UPDATE
+        await updateChecklistItem(editingItem.id, formData)
+      } else {
+        // CREATE
+        await addChecklistItem({
+          ...formData,
+          completed: false,
+        })
+      }
+      handleCloseModal()
+    } catch (error) {
+      alert('Erro ao salvar tarefa. Tente novamente.')
     }
-
-    handleCloseModal()
   }
 
   const handleDelete = (id: string) => {
@@ -70,9 +85,13 @@ export default function ChecklistPage() {
     setShowDeleteModal(true)
   }
 
-  const confirmDelete = () => {
+  const confirmDelete = async () => {
     if (itemToDelete) {
-      deleteChecklistItem(itemToDelete)
+      try {
+        await deleteChecklistItem(itemToDelete)
+      } catch (error) {
+        alert('Erro ao excluir tarefa. Tente novamente.')
+      }
     }
   }
 
@@ -93,26 +112,36 @@ export default function ChecklistPage() {
         </button>
       </div>
 
-      <div className="bg-[hsl(var(--card))] rounded-2xl border border-[hsl(var(--border))] p-5">
-        <div className="flex items-center justify-between mb-3">
-          <h2 className="font-display text-lg font-semibold">Progresso Geral</h2>
-          <span className="text-sm text-muted-foreground">
-            {completed}/{checklist.length} concluídas
-          </span>
-        </div>
-        <ProgressBar value={completed} max={checklist.length} showLabel />
-      </div>
+      {checklist.length === 0 ? (
+        <EmptyState
+          icon={ClipboardList}
+          title="Nenhuma tarefa no checklist"
+          description="Organize seu casamento criando tarefas e acompanhando o progresso"
+          actionLabel="Criar Primeira Tarefa"
+          onAction={() => handleOpenModal()}
+        />
+      ) : (
+        <>
+          <div className="bg-[hsl(var(--card))] rounded-2xl border border-[hsl(var(--border))] p-5">
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="font-display text-lg font-semibold">Progresso Geral</h2>
+              <span className="text-sm text-muted-foreground">
+                {completed}/{checklist.length} concluídas
+              </span>
+            </div>
+            <ProgressBar value={completed} max={checklist.length} showLabel />
+          </div>
 
-      <div className="space-y-3">
-        {checklist.map((item) => (
-          <div
-            key={item.id}
-            className={`flex items-start gap-3 p-4 rounded-2xl border transition-all ${
-              item.completed
-                ? 'bg-[hsl(var(--card))] border-success/30'
-                : 'bg-[hsl(var(--card))] border-[hsl(var(--border))]'
-            }`}
-          >
+          <div className="space-y-3">
+            {checklist.map((item) => (
+              <div
+                key={item.id}
+                className={`flex items-start gap-3 p-4 rounded-2xl border transition-all ${
+                  item.completed
+                    ? 'bg-[hsl(var(--card))] border-success/30'
+                    : 'bg-[hsl(var(--card))] border-[hsl(var(--border))]'
+                }`}
+              >
             <button
               onClick={() => toggleChecklistItem(item.id)}
               className="shrink-0 mt-0.5"
@@ -155,7 +184,9 @@ export default function ChecklistPage() {
             </div>
           </div>
         ))}
-      </div>
+          </div>
+        </>
+      )}
 
       {/* Modal de Adicionar/Editar */}
       <Modal
