@@ -1,15 +1,20 @@
 import { supabase } from './client'
 import { ChecklistItem } from '@/types'
 
-// Tipo para inserir tarefa (sem id)
-type TarefaInsert = Omit<ChecklistItem, 'id'>
-type TarefaUpdate = Partial<Omit<ChecklistItem, 'id'>>
+// Tipo para inserir tarefa (sem id e categoryName)
+type TarefaInsert = Omit<ChecklistItem, 'id' | 'categoryName'>
+type TarefaUpdate = Partial<Omit<ChecklistItem, 'id' | 'categoryName'>>
 
-// READ - Buscar todas as tarefas
+// READ - Buscar todas as tarefas com nome da categoria
 export async function buscarTarefas(): Promise<ChecklistItem[]> {
   const { data, error } = await supabase
     .from('tarefas')
-    .select('*')
+    .select(`
+      *,
+      categorias:categoria_id (
+        nome
+      )
+    `)
     .order('data_vencimento', { ascending: true })
 
   if (error) throw error
@@ -17,7 +22,8 @@ export async function buscarTarefas(): Promise<ChecklistItem[]> {
   return data.map(t => ({
     id: t.id,
     title: t.titulo,
-    category: t.categoria,
+    categoryId: t.categoria_id,
+    categoryName: t.categorias?.nome || 'Outros',
     dueDate: t.data_vencimento,
     completed: t.concluida,
   }))
@@ -29,11 +35,16 @@ export async function adicionarTarefa(tarefa: TarefaInsert): Promise<ChecklistIt
     .from('tarefas')
     .insert({
       titulo: tarefa.title,
-      categoria: tarefa.category,
+      categoria_id: tarefa.categoryId,
       data_vencimento: tarefa.dueDate,
       concluida: tarefa.completed,
     })
-    .select()
+    .select(`
+      *,
+      categorias:categoria_id (
+        nome
+      )
+    `)
     .single()
 
   if (error) throw error
@@ -41,7 +52,8 @@ export async function adicionarTarefa(tarefa: TarefaInsert): Promise<ChecklistIt
   return {
     id: data.id,
     title: data.titulo,
-    category: data.categoria,
+    categoryId: data.categoria_id,
+    categoryName: data.categorias?.nome || 'Outros',
     dueDate: data.data_vencimento,
     completed: data.concluida,
   }
@@ -55,7 +67,7 @@ export async function atualizarTarefa(
   const dbUpdates: any = {}
   
   if (updates.title !== undefined) dbUpdates.titulo = updates.title
-  if (updates.category !== undefined) dbUpdates.categoria = updates.category
+  if (updates.categoryId !== undefined) dbUpdates.categoria_id = updates.categoryId
   if (updates.dueDate !== undefined) dbUpdates.data_vencimento = updates.dueDate
   if (updates.completed !== undefined) dbUpdates.concluida = updates.completed
 
@@ -63,7 +75,12 @@ export async function atualizarTarefa(
     .from('tarefas')
     .update(dbUpdates)
     .eq('id', id)
-    .select()
+    .select(`
+      *,
+      categorias:categoria_id (
+        nome
+      )
+    `)
     .single()
 
   if (error) throw error
@@ -71,7 +88,8 @@ export async function atualizarTarefa(
   return {
     id: data.id,
     title: data.titulo,
-    category: data.categoria,
+    categoryId: data.categoria_id,
+    categoryName: data.categorias?.nome || 'Outros',
     dueDate: data.data_vencimento,
     completed: data.concluida,
   }
@@ -103,7 +121,12 @@ export async function alternarTarefa(id: string): Promise<ChecklistItem> {
     .from('tarefas')
     .update({ concluida: !current.concluida })
     .eq('id', id)
-    .select()
+    .select(`
+      *,
+      categorias:categoria_id (
+        nome
+      )
+    `)
     .single()
 
   if (error) throw error
@@ -111,7 +134,8 @@ export async function alternarTarefa(id: string): Promise<ChecklistItem> {
   return {
     id: data.id,
     title: data.titulo,
-    category: data.categoria,
+    categoryId: data.categoria_id,
+    categoryName: data.categorias?.nome || 'Outros',
     dueDate: data.data_vencimento,
     completed: data.concluida,
   }

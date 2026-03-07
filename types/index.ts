@@ -21,7 +21,8 @@ export interface Category {
 export interface ChecklistItem {
   id: string
   title: string
-  category: string
+  categoryId: string | null  // ID da categoria (FK) ou null para "Outros"
+  categoryName?: string       // Nome da categoria (para exibição)
   dueDate: string
   completed: boolean
 }

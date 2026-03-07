@@ -10,14 +10,14 @@ import { CheckCircle2, Circle, CalendarDays, Plus, Pencil, Trash2, ClipboardList
 import { ChecklistItem } from '@/types'
 
 export default function ChecklistPage() {
-  const { checklist, checklistLoading, addChecklistItem, updateChecklistItem, deleteChecklistItem, toggleChecklistItem } = useData()
+  const { checklist, checklistLoading, addChecklistItem, updateChecklistItem, deleteChecklistItem, toggleChecklistItem, categories } = useData()
   const [showModal, setShowModal] = useState(false)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [itemToDelete, setItemToDelete] = useState<string | null>(null)
   const [editingItem, setEditingItem] = useState<ChecklistItem | null>(null)
   const [formData, setFormData] = useState({
     title: '',
-    category: '',
+    categoryId: '',
     dueDate: '',
   })
 
@@ -39,12 +39,12 @@ export default function ChecklistPage() {
       setEditingItem(item)
       setFormData({
         title: item.title,
-        category: item.category,
+        categoryId: item.categoryId || '',
         dueDate: item.dueDate,
       })
     } else {
       setEditingItem(null)
-      setFormData({ title: '', category: '', dueDate: '' })
+      setFormData({ title: '', categoryId: '', dueDate: '' })
     }
     setShowModal(true)
   }
@@ -52,13 +52,13 @@ export default function ChecklistPage() {
   const handleCloseModal = () => {
     setShowModal(false)
     setEditingItem(null)
-    setFormData({ title: '', category: '', dueDate: '' })
+    setFormData({ title: '', categoryId: '', dueDate: '' })
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
-    if (!formData.title || !formData.category || !formData.dueDate) {
+    if (!formData.title || !formData.categoryId || !formData.dueDate) {
       alert('Preencha todos os campos')
       return
     }
@@ -66,11 +66,17 @@ export default function ChecklistPage() {
     try {
       if (editingItem) {
         // UPDATE
-        await updateChecklistItem(editingItem.id, formData)
+        await updateChecklistItem(editingItem.id, {
+          title: formData.title,
+          categoryId: formData.categoryId === 'outros' ? null : formData.categoryId,
+          dueDate: formData.dueDate,
+        })
       } else {
         // CREATE
         await addChecklistItem({
-          ...formData,
+          title: formData.title,
+          categoryId: formData.categoryId === 'outros' ? null : formData.categoryId,
+          dueDate: formData.dueDate,
           completed: false,
         })
       }
@@ -158,7 +164,7 @@ export default function ChecklistPage() {
                 {item.title}
               </p>
               <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
-                <span className="px-1.5 py-0.5 rounded bg-secondary text-[10px]">{item.category}</span>
+                <span className="px-1.5 py-0.5 rounded bg-secondary text-[10px]">{item.categoryName}</span>
                 <span className="flex items-center gap-1">
                   <CalendarDays className="h-3 w-3" />
                   {new Date(item.dueDate).toLocaleDateString('pt-BR')}
@@ -213,14 +219,20 @@ export default function ChecklistPage() {
             <label className="text-sm font-medium text-[hsl(var(--foreground))] mb-1.5 block">
               Categoria
             </label>
-            <input
-              type="text"
-              value={formData.category}
-              onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-              placeholder="Ex: Papelaria, Organização, etc"
+            <select
+              value={formData.categoryId}
+              onChange={(e) => setFormData({ ...formData, categoryId: e.target.value })}
               className="w-full px-3 py-2 rounded-lg border border-[hsl(var(--input))] bg-[hsl(var(--background))] text-sm text-[hsl(var(--foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--ring))]"
               required
-            />
+            >
+              <option value="">Selecione uma categoria</option>
+              {categories.map((cat) => (
+                <option key={cat.id} value={cat.id}>
+                  {cat.name}
+                </option>
+              ))}
+              <option value="outros">Outros</option>
+            </select>
           </div>
 
           <div>

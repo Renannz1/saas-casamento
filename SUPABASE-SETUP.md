@@ -9,6 +9,16 @@
 
 3. Cole no SQL Editor e clique em "Run" para executar
 
+## Passo 1.5: Migração - Relacionar Tarefas com Categorias
+
+**IMPORTANTE**: Execute este passo DEPOIS de criar as tabelas iniciais!
+
+1. Copie o conteúdo do arquivo `supabase-migration-tarefas.sql`
+
+2. Cole no SQL Editor e clique em "Run"
+
+3. Isso vai adicionar o relacionamento entre tarefas e categorias (Foreign Key)
+
 ## Passo 2: Verificar as Tabelas
 
 Após executar o script, você deve ter:
