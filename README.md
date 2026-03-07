@@ -128,11 +128,22 @@ wedding-finance/
 │   └── page.tsx                  # Redirect para login
 ├── components/
 │   ├── BottomNav.tsx             # Navegação mobile
+│   ├── ConfirmModal.tsx          # Modal de confirmação
+│   ├── EmptyState.tsx            # Estado vazio reutilizável
+│   ├── Modal.tsx                 # Modal genérico
 │   ├── Navbar.tsx                # Barra superior
 │   ├── ProgressBar.tsx           # Barra de progresso
 │   └── Sidebar.tsx               # Menu lateral desktop
-├── data/
-│   └── mockData.ts               # Dados mockados
+├── contexts/
+│   └── DataContext.tsx           # Context API com Supabase
+├── lib/
+│   └── supabase/
+│       ├── client.ts             # Cliente Supabase
+│       ├── categorias.ts         # CRUD de categorias
+│       ├── gastos.ts             # CRUD de gastos
+│       └── tarefas.ts            # CRUD de tarefas
+├── types/
+│   └── index.ts                  # Tipos TypeScript
 ├── tailwind.config.ts            # Configuração Tailwind
 └── package.json
 ```
@@ -146,8 +157,9 @@ wedding-finance/
 - ✅ Animações suaves e transições
 - ✅ Componentização clara e reutilizável
 - ✅ TypeScript para type safety
-- ✅ Dados completamente mockados
-- ✅ Sem backend ou autenticação real
+- ✅ Backend com Supabase (PostgreSQL)
+- ✅ CRUD completo de categorias, gastos e tarefas
+- ✅ Context API para gerenciamento de estado
 
 ## 📱 Responsividade
 

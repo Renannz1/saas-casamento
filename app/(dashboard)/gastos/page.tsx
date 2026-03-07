@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useData } from '@/contexts/DataContext'
-import { Category, Expense } from '@/data/mockData'
+import { Category, Expense } from '@/types'
 import ProgressBar from '@/components/ProgressBar'
 import ConfirmModal from '@/components/ConfirmModal'
 import Modal from '@/components/Modal'

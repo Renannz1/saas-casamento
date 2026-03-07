@@ -1,5 +1,5 @@
 import { supabase } from './client'
-import { Category, Expense } from '@/data/mockData'
+import { Category, Expense } from '@/types'
 import { buscarGastosPorCategoria } from './gastos'
 
 // Tipo para inserir categoria (sem id, spent e expenses)

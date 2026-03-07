@@ -1,7 +1,7 @@
 'use client'
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react'
-import { ChecklistItem, Category, Expense } from '@/data/mockData'
+import { ChecklistItem, Category, Expense } from '@/types'
 import * as categoriasService from '@/lib/supabase/categorias'
 import * as gastosService from '@/lib/supabase/gastos'
 import * as tarefasService from '@/lib/supabase/tarefas'

@@ -1,5 +1,5 @@
 import { supabase } from './client'
-import { Expense } from '@/data/mockData'
+import { Expense } from '@/types'
 
 // Tipo para inserir gasto (sem id)
 type GastoInsert = Omit<Expense, 'id'>

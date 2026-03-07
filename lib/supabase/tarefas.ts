@@ -1,5 +1,5 @@
 import { supabase } from './client'
-import { ChecklistItem } from '@/data/mockData'
+import { ChecklistItem } from '@/types'
 
 // Tipo para inserir tarefa (sem id)
 type TarefaInsert = Omit<ChecklistItem, 'id'>

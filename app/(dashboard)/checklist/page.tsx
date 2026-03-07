@@ -7,7 +7,7 @@ import ConfirmModal from '@/components/ConfirmModal'
 import Modal from '@/components/Modal'
 import EmptyState from '@/components/EmptyState'
 import { CheckCircle2, Circle, CalendarDays, Plus, Pencil, Trash2, ClipboardList } from 'lucide-react'
-import { ChecklistItem } from '@/data/mockData'
+import { ChecklistItem } from '@/types'
 
 export default function ChecklistPage() {
   const { checklist, checklistLoading, addChecklistItem, updateChecklistItem, deleteChecklistItem, toggleChecklistItem } = useData()
