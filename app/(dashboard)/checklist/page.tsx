@@ -9,6 +9,12 @@ import EmptyState from '@/components/EmptyState'
 import { CheckCircle2, Circle, CalendarDays, Plus, Pencil, Trash2, ClipboardList } from 'lucide-react'
 import { ChecklistItem } from '@/types'
 
+// Helper para formatar data sem problema de timezone
+const formatDate = (dateString: string) => {
+  const [year, month, day] = dateString.split('-')
+  return new Date(parseInt(year), parseInt(month) - 1, parseInt(day)).toLocaleDateString('pt-BR')
+}
+
 export default function ChecklistPage() {
   const { checklist, checklistLoading, addChecklistItem, updateChecklistItem, deleteChecklistItem, toggleChecklistItem, categories } = useData()
   const [showModal, setShowModal] = useState(false)
@@ -167,7 +173,7 @@ export default function ChecklistPage() {
                 <span className="px-1.5 py-0.5 rounded bg-secondary text-[10px]">{item.categoryName}</span>
                 <span className="flex items-center gap-1">
                   <CalendarDays className="h-3 w-3" />
-                  {new Date(item.dueDate).toLocaleDateString('pt-BR')}
+                  {formatDate(item.dueDate)}
                 </span>
               </div>
             </div>

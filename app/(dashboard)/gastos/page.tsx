@@ -11,6 +11,12 @@ import { ChevronLeft, Plus, Package, CreditCard, CalendarDays, Pencil, Trash2, X
 
 const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
 
+// Helper para formatar data sem problema de timezone
+const formatDate = (dateString: string) => {
+  const [year, month, day] = dateString.split('-')
+  return new Date(parseInt(year), parseInt(month) - 1, parseInt(day)).toLocaleDateString('pt-BR')
+}
+
 function ExpenseItem({ expense, onEdit, onDelete }: { 
   expense: Expense
   onEdit: () => void
@@ -74,7 +80,7 @@ function ExpenseItem({ expense, onEdit, onDelete }: {
         )}
         <div className="flex items-center gap-1">
           <CalendarDays className="h-3 w-3" />
-          <span>{new Date(expense.dueDate).toLocaleDateString('pt-BR')}</span>
+          <span>{formatDate(expense.dueDate)}</span>
         </div>
       </div>
     </div>

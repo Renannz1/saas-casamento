@@ -16,6 +16,12 @@ const COLORS = [
 
 const BUDGET_TOTAL = 120000
 
+// Helper para formatar data sem problema de timezone
+const formatDate = (dateString: string) => {
+  const [year, month, day] = dateString.split('-')
+  return new Date(parseInt(year), parseInt(month) - 1, parseInt(day)).toLocaleDateString('pt-BR')
+}
+
 export default function DashboardPage() {
   const { categories, categoriesLoading, checklist } = useData()
 
@@ -188,7 +194,7 @@ export default function DashboardPage() {
                   <Clock className="h-4 w-4 text-muted-foreground shrink-0" />
                   <div className="flex-1 min-w-0">
                     <p className="text-sm text-[hsl(var(--foreground))] truncate">{t.title}</p>
-                    <p className="text-xs text-muted-foreground">{new Date(t.dueDate).toLocaleDateString('pt-BR')}</p>
+                    <p className="text-xs text-muted-foreground">{formatDate(t.dueDate)}</p>
                   </div>
                 </div>
               ))}
