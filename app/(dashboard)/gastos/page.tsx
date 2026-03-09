@@ -182,6 +182,7 @@ export default function GastosPage() {
     paid: false,
     dueDate: '',
     paidBy: '' as 'noivo' | 'noiva' | 'familia' | '',
+    paymentMethod: '' as 'avista' | 'parcelado' | '',
   })
 
   // Busca a categoria selecionada sempre atualizada do Context
@@ -285,6 +286,7 @@ export default function GastosPage() {
         paid: expense.paid,
         dueDate: expense.dueDate,
         paidBy: (expense.paidBy || '') as 'noivo' | 'noiva' | 'familia' | '',
+        paymentMethod: (expense.paymentMethod || '') as 'avista' | 'parcelado' | '',
       })
     } else {
       setEditingExpense(null)
@@ -296,6 +298,7 @@ export default function GastosPage() {
         paid: false,
         dueDate: '',
         paidBy: '',
+        paymentMethod: '',
       })
     }
     setShowExpenseModal(true)
@@ -312,6 +315,7 @@ export default function GastosPage() {
       paid: false,
       dueDate: '',
       paidBy: '',
+      paymentMethod: '',
     })
   }
 
@@ -355,6 +359,7 @@ export default function GastosPage() {
           paid: expenseFormData.paid,
           dueDate: expenseFormData.dueDate,
           paidBy: expenseFormData.paidBy || null,
+          paymentMethod: expenseFormData.paymentMethod || null,
         })
       } else {
         // CREATE
@@ -366,6 +371,7 @@ export default function GastosPage() {
           paid: expenseFormData.paid,
           dueDate: expenseFormData.dueDate,
           paidBy: expenseFormData.paidBy || null,
+          paymentMethod: expenseFormData.paymentMethod || null,
         })
       }
       handleCloseExpenseModal()
@@ -472,6 +478,29 @@ export default function GastosPage() {
 
             <div>
               <label className="text-sm font-medium text-[hsl(var(--foreground))] mb-1.5 block">
+                Forma de Pagamento
+              </label>
+              <select
+                value={expenseFormData.paymentMethod}
+                onChange={(e) => {
+                  const method = e.target.value as 'avista' | 'parcelado' | ''
+                  setExpenseFormData({ 
+                    ...expenseFormData, 
+                    paymentMethod: method,
+                    installments: method === 'avista' ? '1' : expenseFormData.installments
+                  })
+                }}
+                className="w-full px-3 py-2 rounded-lg border border-[hsl(var(--input))] bg-[hsl(var(--background))] text-sm text-[hsl(var(--foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--ring))]"
+                required
+              >
+                <option value="">Selecione a forma de pagamento</option>
+                <option value="avista">À Vista</option>
+                <option value="parcelado">Parcelado</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="text-sm font-medium text-[hsl(var(--foreground))] mb-1.5 block">
                 Valor Total
               </label>
               <input
@@ -485,20 +514,22 @@ export default function GastosPage() {
               />
             </div>
 
-            <div>
-              <label className="text-sm font-medium text-[hsl(var(--foreground))] mb-1.5 block">
-                Número de Parcelas
-              </label>
-              <input
-                type="number"
-                min="1"
-                value={expenseFormData.installments}
-                onChange={(e) => setExpenseFormData({ ...expenseFormData, installments: e.target.value })}
-                placeholder="Ex: 5"
-                className="w-full px-3 py-2 rounded-lg border border-[hsl(var(--input))] bg-[hsl(var(--background))] text-sm text-[hsl(var(--foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--ring))]"
-                required
-              />
-            </div>
+            {expenseFormData.paymentMethod === 'parcelado' && (
+              <div>
+                <label className="text-sm font-medium text-[hsl(var(--foreground))] mb-1.5 block">
+                  Número de Parcelas
+                </label>
+                <input
+                  type="number"
+                  min="2"
+                  value={expenseFormData.installments}
+                  onChange={(e) => setExpenseFormData({ ...expenseFormData, installments: e.target.value })}
+                  placeholder="Ex: 5"
+                  className="w-full px-3 py-2 rounded-lg border border-[hsl(var(--input))] bg-[hsl(var(--background))] text-sm text-[hsl(var(--foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--ring))]"
+                  required
+                />
+              </div>
+            )}
 
             <div>
               <label className="text-sm font-medium text-[hsl(var(--foreground))] mb-1.5 block">

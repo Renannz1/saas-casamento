@@ -9,6 +9,7 @@ export interface Expense {
   paid: boolean
   dueDate: string
   paidBy: 'noivo' | 'noiva' | 'familia' | null  // Quem pagou
+  paymentMethod: 'avista' | 'parcelado' | null  // Forma de pagamento
 }
 
 export interface Category {

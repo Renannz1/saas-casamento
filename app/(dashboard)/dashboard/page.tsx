@@ -42,6 +42,16 @@ export default function DashboardPage() {
 
   const chartData = categories.map((c) => ({ name: c.name, value: c.spent }))
 
+  // Buscar gastos pendentes de todas as categorias
+  const pendingExpenses = categories
+    .flatMap(cat => 
+      cat.expenses
+        .filter(exp => !exp.paid)
+        .map(exp => ({ ...exp, categoryName: cat.name }))
+    )
+    .sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime())
+    .slice(0, 5)
+
   const completedTasks = checklist.filter((t) => t.completed).length
   const checklistPct = checklist.length > 0 ? (completedTasks / checklist.length) * 100 : 0
   const nextTasks = checklist.filter((t) => !t.completed).slice(0, 5)
@@ -148,29 +158,42 @@ export default function DashboardPage() {
         <div className="bg-[hsl(var(--card))] rounded-2xl border border-[hsl(var(--border))] p-5">
           <h2 className="font-display text-lg font-semibold mb-4">Próximos Pagamentos</h2>
           <div className="space-y-3">
-            {categories.length === 0 ? (
+            {pendingExpenses.length === 0 ? (
               <div className="text-center py-8">
                 <div className="w-16 h-16 mx-auto mb-3 rounded-full bg-muted flex items-center justify-center">
                   <Package className="h-8 w-8 text-muted-foreground opacity-50" />
                 </div>
                 <p className="text-sm text-muted-foreground">
-                  Nenhuma categoria cadastrada ainda
+                  Nenhum pagamento pendente
                 </p>
               </div>
             ) : (
-              categories.slice(0, 5).map((cat) => (
-                <div key={cat.id} className="flex items-center justify-between p-3 rounded-xl bg-secondary">
-                  <div>
-                    <p className="text-sm font-medium text-[hsl(var(--foreground))]">{cat.name}</p>
-                    <p className="text-xs text-muted-foreground">{cat.expenses.length} gasto(s)</p>
+              pendingExpenses.map((exp) => (
+                <div key={exp.id} className="flex items-center justify-between p-3 rounded-xl bg-secondary">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-[hsl(var(--foreground))]">{exp.title}</p>
+                    <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
+                      <span className="px-2 py-0.5 rounded bg-secondary border border-[hsl(var(--border))] font-medium text-[hsl(var(--foreground))]">
+                        {exp.categoryName}
+                      </span>
+                      <span className="text-muted-foreground/50">•</span>
+                      <span className="flex items-center gap-1">
+                        <CalendarDays className="h-3 w-3" />
+                        {formatDate(exp.dueDate)}
+                      </span>
+                      {exp.installments > 1 && (
+                        <>
+                          <span className="text-muted-foreground/50">•</span>
+                          <span className="flex items-center gap-1">
+                            <Package className="h-3 w-3" />
+                            {exp.installments}x
+                          </span>
+                        </>
+                      )}
+                    </div>
                   </div>
-                  <div className="text-right">
-                    <p className="text-sm font-semibold text-[hsl(var(--foreground))]">{fmt(cat.spent)}</p>
-                    <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${
-                      cat.spent > cat.planned ? 'bg-destructive/15 text-destructive' : 'bg-success/15 text-success'
-                    }`}>
-                      {cat.spent > cat.planned ? 'Excedido' : 'No limite'}
-                    </span>
+                  <div className="text-right ml-3">
+                    <p className="text-sm font-semibold text-[hsl(var(--foreground))]">{fmt(exp.total)}</p>
                   </div>
                 </div>
               ))
