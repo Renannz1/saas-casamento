@@ -45,6 +45,7 @@ export async function buscarGastosPorCategoria(categoriaId: string): Promise<Exp
     installments: g.parcelas,
     paid: g.pago,
     dueDate: g.data_vencimento,
+    paidBy: g.pago_por,
   }))
 }
 
@@ -63,6 +64,7 @@ export async function adicionarGasto(
       parcelas: gasto.installments,
       pago: gasto.paid,
       data_vencimento: gasto.dueDate,
+      pago_por: gasto.paidBy,
     })
     .select()
     .single()
@@ -80,6 +82,7 @@ export async function adicionarGasto(
     installments: data.parcelas,
     paid: data.pago,
     dueDate: data.data_vencimento,
+    paidBy: data.pago_por,
   }
 }
 
@@ -97,6 +100,7 @@ export async function atualizarGasto(
   if (updates.installments !== undefined) dbUpdates.parcelas = updates.installments
   if (updates.paid !== undefined) dbUpdates.pago = updates.paid
   if (updates.dueDate !== undefined) dbUpdates.data_vencimento = updates.dueDate
+  if (updates.paidBy !== undefined) dbUpdates.pago_por = updates.paidBy
 
   const { data, error } = await supabase
     .from('gastos')
@@ -118,6 +122,7 @@ export async function atualizarGasto(
     installments: data.parcelas,
     paid: data.pago,
     dueDate: data.data_vencimento,
+    paidBy: data.pago_por,
   }
 }
 

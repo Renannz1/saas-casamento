@@ -30,11 +30,18 @@ function ExpenseItem({ expense, onEdit, onDelete }: {
         <div className="flex items-start gap-2">
           <div className="text-right">
             <p className="text-sm font-semibold text-[hsl(var(--foreground))]">{fmt(expense.total)}</p>
-            <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${
-              expense.paid ? 'bg-success/15 text-success' : 'bg-primary/15 text-primary'
-            }`}>
-              {expense.paid ? 'Pago' : 'Pendente'}
-            </span>
+            <div className="flex items-center gap-1.5 justify-end">
+              <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${
+                expense.paid ? 'bg-success/15 text-success' : 'bg-primary/15 text-primary'
+              }`}>
+                {expense.paid ? 'Pago' : 'Pendente'}
+              </span>
+              {expense.paid && expense.paidBy && (
+                <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted font-medium text-muted-foreground">
+                  {expense.paidBy === 'noivo' ? 'Noivo' : expense.paidBy === 'noiva' ? 'Noiva' : 'Família'}
+                </span>
+              )}
+            </div>
           </div>
           <div className="flex flex-col gap-1">
             <button
@@ -55,14 +62,21 @@ function ExpenseItem({ expense, onEdit, onDelete }: {
         </div>
       </div>
 
-      {expense.installments > 1 && (
-        <div className="flex items-center gap-2 text-xs text-muted-foreground pt-1 border-t border-[hsl(var(--border))]">
-          <CreditCard className="h-3 w-3" />
-          <span>{expense.installments}x de {fmt(installmentValue)}</span>
-          <CalendarDays className="h-3 w-3 ml-2" />
-          <span>Início: {new Date(expense.dueDate).toLocaleDateString('pt-BR')}</span>
+      <div className="flex items-center gap-3 text-xs text-muted-foreground pt-1 border-t border-[hsl(var(--border))]">
+        {expense.installments > 1 && (
+          <>
+            <div className="flex items-center gap-1">
+              <CreditCard className="h-3 w-3" />
+              <span>{expense.installments}x de {fmt(installmentValue)}</span>
+            </div>
+            <span className="text-muted-foreground/50">•</span>
+          </>
+        )}
+        <div className="flex items-center gap-1">
+          <CalendarDays className="h-3 w-3" />
+          <span>{new Date(expense.dueDate).toLocaleDateString('pt-BR')}</span>
         </div>
-      )}
+      </div>
     </div>
   )
 }
@@ -161,6 +175,7 @@ export default function GastosPage() {
     installments: '1',
     paid: false,
     dueDate: '',
+    paidBy: '' as 'noivo' | 'noiva' | 'familia' | '',
   })
 
   // Busca a categoria selecionada sempre atualizada do Context
@@ -263,6 +278,7 @@ export default function GastosPage() {
         installments: expense.installments.toString(),
         paid: expense.paid,
         dueDate: expense.dueDate,
+        paidBy: (expense.paidBy || '') as 'noivo' | 'noiva' | 'familia' | '',
       })
     } else {
       setEditingExpense(null)
@@ -273,6 +289,7 @@ export default function GastosPage() {
         installments: '1',
         paid: false,
         dueDate: '',
+        paidBy: '',
       })
     }
     setShowExpenseModal(true)
@@ -288,6 +305,7 @@ export default function GastosPage() {
       installments: '1',
       paid: false,
       dueDate: '',
+      paidBy: '',
     })
   }
 
@@ -298,6 +316,12 @@ export default function GastosPage() {
 
     if (!expenseFormData.title || !expenseFormData.fornecedor || !expenseFormData.total || !expenseFormData.dueDate) {
       alert('Preencha todos os campos obrigatórios')
+      return
+    }
+
+    // Se marcou como pago, "Quem Pagou" é obrigatório
+    if (expenseFormData.paid && !expenseFormData.paidBy) {
+      alert('Quando marcado como pago, é obrigatório informar quem pagou')
       return
     }
 
@@ -324,6 +348,7 @@ export default function GastosPage() {
           installments: installments,
           paid: expenseFormData.paid,
           dueDate: expenseFormData.dueDate,
+          paidBy: expenseFormData.paidBy || null,
         })
       } else {
         // CREATE
@@ -334,6 +359,7 @@ export default function GastosPage() {
           installments: installments,
           paid: expenseFormData.paid,
           dueDate: expenseFormData.dueDate,
+          paidBy: expenseFormData.paidBy || null,
         })
       }
       handleCloseExpenseModal()
@@ -486,13 +512,32 @@ export default function GastosPage() {
                 type="checkbox"
                 id="paid"
                 checked={expenseFormData.paid}
-                onChange={(e) => setExpenseFormData({ ...expenseFormData, paid: e.target.checked })}
+                onChange={(e) => setExpenseFormData({ ...expenseFormData, paid: e.target.checked, paidBy: e.target.checked ? expenseFormData.paidBy : '' })}
                 className="w-4 h-4 rounded border-[hsl(var(--input))] text-primary focus:ring-2 focus:ring-[hsl(var(--ring))]"
               />
               <label htmlFor="paid" className="text-sm text-[hsl(var(--foreground))] cursor-pointer">
                 Marcar como pago
               </label>
             </div>
+
+            {expenseFormData.paid && (
+              <div>
+                <label className="text-sm font-medium text-[hsl(var(--foreground))] mb-1.5 block">
+                  Quem Pagou <span className="text-destructive">*</span>
+                </label>
+                <select
+                  value={expenseFormData.paidBy}
+                  onChange={(e) => setExpenseFormData({ ...expenseFormData, paidBy: e.target.value as 'noivo' | 'noiva' | 'familia' | '' })}
+                  className="w-full px-3 py-2 rounded-lg border border-[hsl(var(--input))] bg-[hsl(var(--background))] text-sm text-[hsl(var(--foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--ring))]"
+                  required
+                >
+                  <option value="">Selecione quem pagou</option>
+                  <option value="noivo">Noivo</option>
+                  <option value="noiva">Noiva</option>
+                  <option value="familia">Família</option>
+                </select>
+              </div>
+            )}
 
             <div className="flex gap-2 pt-2">
               <button

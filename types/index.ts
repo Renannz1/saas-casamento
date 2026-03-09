@@ -8,6 +8,7 @@ export interface Expense {
   installments: number
   paid: boolean
   dueDate: string
+  paidBy: 'noivo' | 'noiva' | 'familia' | null  // Quem pagou
 }
 
 export interface Category {
