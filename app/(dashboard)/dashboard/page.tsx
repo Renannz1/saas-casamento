@@ -2,7 +2,7 @@
 
 import { useData } from '@/contexts/DataContext'
 import ProgressBar from '@/components/ProgressBar'
-import { AlertTriangle, TrendingUp, TrendingDown, Wallet, Clock, Package, ClipboardList } from 'lucide-react'
+import { AlertTriangle, TrendingUp, TrendingDown, Wallet, Clock, Package, ClipboardList, CalendarDays } from 'lucide-react'
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts'
 
 const COLORS = [
@@ -181,19 +181,13 @@ export default function DashboardPage() {
                         <CalendarDays className="h-3 w-3" />
                         {formatDate(exp.dueDate)}
                       </span>
-                      {exp.installments > 1 && (
-                        <>
-                          <span className="text-muted-foreground/50">•</span>
-                          <span className="flex items-center gap-1">
-                            <Package className="h-3 w-3" />
-                            {exp.installments}x
-                          </span>
-                        </>
-                      )}
                     </div>
                   </div>
                   <div className="text-right ml-3">
                     <p className="text-sm font-semibold text-[hsl(var(--foreground))]">{fmt(exp.total)}</p>
+                    {exp.installments > 1 && (
+                      <p className="text-[10px] text-muted-foreground">{exp.installments}x parcelas</p>
+                    )}
                   </div>
                 </div>
               ))
