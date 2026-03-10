@@ -5,8 +5,17 @@ import { ChecklistItem } from '@/types'
 type TarefaInsert = Omit<ChecklistItem, 'id' | 'categoryName'>
 type TarefaUpdate = Partial<Omit<ChecklistItem, 'id' | 'categoryName'>>
 
+// Helper: Pegar user_id do usuário autenticado
+async function getUserId(): Promise<string> {
+  const { data: { user }, error } = await supabase.auth.getUser()
+  if (error || !user) throw new Error('Usuário não autenticado')
+  return user.id
+}
+
 // READ - Buscar todas as tarefas com nome da categoria
 export async function buscarTarefas(): Promise<ChecklistItem[]> {
+  const userId = await getUserId()
+  
   const { data, error } = await supabase
     .from('tarefas')
     .select(`
@@ -15,6 +24,7 @@ export async function buscarTarefas(): Promise<ChecklistItem[]> {
         nome
       )
     `)
+    .eq('user_id', userId)
     .order('data_vencimento', { ascending: true })
 
   if (error) throw error
@@ -31,6 +41,8 @@ export async function buscarTarefas(): Promise<ChecklistItem[]> {
 
 // CREATE - Adicionar nova tarefa
 export async function adicionarTarefa(tarefa: TarefaInsert): Promise<ChecklistItem> {
+  const userId = await getUserId()
+  
   const { data, error } = await supabase
     .from('tarefas')
     .insert({
@@ -38,6 +50,7 @@ export async function adicionarTarefa(tarefa: TarefaInsert): Promise<ChecklistIt
       categoria_id: tarefa.categoryId,
       data_vencimento: tarefa.dueDate,
       concluida: tarefa.completed,
+      user_id: userId,
     })
     .select(`
       *,
@@ -64,6 +77,8 @@ export async function atualizarTarefa(
   id: string,
   updates: TarefaUpdate
 ): Promise<ChecklistItem> {
+  const userId = await getUserId()
+  
   const dbUpdates: any = {}
   
   if (updates.title !== undefined) dbUpdates.titulo = updates.title
@@ -75,6 +90,7 @@ export async function atualizarTarefa(
     .from('tarefas')
     .update(dbUpdates)
     .eq('id', id)
+    .eq('user_id', userId)
     .select(`
       *,
       categorias:categoria_id (
@@ -97,21 +113,27 @@ export async function atualizarTarefa(
 
 // DELETE - Remover tarefa
 export async function deletarTarefa(id: string): Promise<void> {
+  const userId = await getUserId()
+  
   const { error } = await supabase
     .from('tarefas')
     .delete()
     .eq('id', id)
+    .eq('user_id', userId)
 
   if (error) throw error
 }
 
 // TOGGLE - Alternar status de conclusão
 export async function alternarTarefa(id: string): Promise<ChecklistItem> {
+  const userId = await getUserId()
+  
   // Busca o estado atual
   const { data: current, error: fetchError } = await supabase
     .from('tarefas')
     .select('concluida')
     .eq('id', id)
+    .eq('user_id', userId)
     .single()
 
   if (fetchError) throw fetchError
@@ -121,6 +143,7 @@ export async function alternarTarefa(id: string): Promise<ChecklistItem> {
     .from('tarefas')
     .update({ concluida: !current.concluida })
     .eq('id', id)
+    .eq('user_id', userId)
     .select(`
       *,
       categorias:categoria_id (
@@ -140,3 +163,4 @@ export async function alternarTarefa(id: string): Promise<ChecklistItem> {
     completed: data.concluida,
   }
 }
+

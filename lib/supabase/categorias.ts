@@ -6,11 +6,21 @@ import { buscarGastosPorCategoria } from './gastos'
 type CategoriaInsert = Omit<Category, 'id' | 'spent' | 'expenses'>
 type CategoriaUpdate = Partial<Omit<Category, 'id' | 'expenses'>>
 
+// Helper: Pegar user_id do usuário autenticado
+async function getUserId(): Promise<string> {
+  const { data: { user }, error } = await supabase.auth.getUser()
+  if (error || !user) throw new Error('Usuário não autenticado')
+  return user.id
+}
+
 // READ - Buscar todas as categorias com seus gastos
 export async function buscarCategorias(): Promise<Category[]> {
+  const userId = await getUserId()
+  
   const { data, error } = await supabase
     .from('categorias')
     .select('*')
+    .eq('user_id', userId)
     .order('nome', { ascending: true })
 
   if (error) throw error
@@ -34,12 +44,15 @@ export async function buscarCategorias(): Promise<Category[]> {
 
 // CREATE - Adicionar nova categoria
 export async function adicionarCategoria(categoria: CategoriaInsert): Promise<Category> {
+  const userId = await getUserId()
+  
   const { data, error } = await supabase
     .from('categorias')
     .insert({
       nome: categoria.name,
       planejado: categoria.planned,
       gasto: 0,
+      user_id: userId,
     })
     .select()
     .single()

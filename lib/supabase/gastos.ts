@@ -5,13 +5,23 @@ import { Expense } from '@/types'
 type GastoInsert = Omit<Expense, 'id'>
 type GastoUpdate = Partial<Omit<Expense, 'id'>>
 
+// Helper: Pegar user_id do usuário autenticado
+async function getUserId(): Promise<string> {
+  const { data: { user }, error } = await supabase.auth.getUser()
+  if (error || !user) throw new Error('Usuário não autenticado')
+  return user.id
+}
+
 // Helper: Atualiza o total gasto da categoria
 async function atualizarTotalCategoria(categoriaId: string): Promise<void> {
+  const userId = await getUserId()
+  
   // Busca todos os gastos da categoria
   const { data: gastos, error: gastosError } = await supabase
     .from('gastos')
     .select('total')
     .eq('categoria_id', categoriaId)
+    .eq('user_id', userId)
 
   if (gastosError) throw gastosError
 
@@ -23,16 +33,20 @@ async function atualizarTotalCategoria(categoriaId: string): Promise<void> {
     .from('categorias')
     .update({ gasto: totalGasto })
     .eq('id', categoriaId)
+    .eq('user_id', userId)
 
   if (updateError) throw updateError
 }
 
 // READ - Buscar gastos de uma categoria
 export async function buscarGastosPorCategoria(categoriaId: string): Promise<Expense[]> {
+  const userId = await getUserId()
+  
   const { data, error } = await supabase
     .from('gastos')
     .select('*')
     .eq('categoria_id', categoriaId)
+    .eq('user_id', userId)
     .order('data_vencimento', { ascending: true })
 
   if (error) throw error
@@ -55,6 +69,8 @@ export async function adicionarGasto(
   categoriaId: string,
   gasto: GastoInsert
 ): Promise<Expense> {
+  const userId = await getUserId()
+  
   const { data, error } = await supabase
     .from('gastos')
     .insert({
@@ -67,6 +83,7 @@ export async function adicionarGasto(
       data_vencimento: gasto.dueDate,
       pago_por: gasto.paidBy,
       forma_pagamento: gasto.paymentMethod,
+      user_id: userId,
     })
     .select()
     .single()
@@ -95,6 +112,8 @@ export async function atualizarGasto(
   gastoId: string,
   updates: GastoUpdate
 ): Promise<Expense> {
+  const userId = await getUserId()
+  
   const dbUpdates: any = {}
   
   if (updates.title !== undefined) dbUpdates.titulo = updates.title
@@ -110,6 +129,7 @@ export async function atualizarGasto(
     .from('gastos')
     .update(dbUpdates)
     .eq('id', gastoId)
+    .eq('user_id', userId)
     .select()
     .single()
 
@@ -133,13 +153,17 @@ export async function atualizarGasto(
 
 // DELETE - Remover gasto
 export async function deletarGasto(categoriaId: string, gastoId: string): Promise<void> {
+  const userId = await getUserId()
+  
   const { error } = await supabase
     .from('gastos')
     .delete()
     .eq('id', gastoId)
+    .eq('user_id', userId)
 
   if (error) throw error
 
   // Atualiza o total da categoria
   await atualizarTotalCategoria(categoriaId)
 }
+
